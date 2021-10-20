@@ -1,0 +1,23 @@
+import Page from "./page";
+
+class Item {
+    constructor(id?: string) {
+        if (id) {
+            this.id = id;
+        } else {
+            this.id = "generate new id";
+        }
+    }
+
+    public id: string;
+    public env: { [key: string]: any } = {};
+    public height: number = 40;
+    public isActive: boolean = false;
+    public page: Page;
+    public width: number = 40;
+    public x: number = 0;
+    public y: number = 0;
+    public z: number = 0;
+}
+
+export default Item;
