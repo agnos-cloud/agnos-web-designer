@@ -35,7 +35,7 @@ class Component extends Item {
             img.height = this.height * window.devicePixelRatio;
             img.addEventListener('load', () => {
                 this.image = img;
-                // TODO: fire a custom event to force the canvas to refresh
+                // fire a custom event to force the canvas to refresh
                 const event = new Event("componentimageload");
                 window.dispatchEvent(event);
             });
