@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import Component from "./items/component";
+import Component, { Path } from "./items/component";
 import Connector from "./items/connector";
 import Item from "./items/item";
 import Page from "./items/page";
@@ -18,19 +18,40 @@ const Canvas = (props: CanvasPropTyep) => {
     const dragStartRef = useRef<Point>({ x: 0, y: 0 });
     const dragEndRef = useRef<Point>({ x: 0, y: 0 });
 
-    const drawComponent = (context, component: Component) => {
-        context.fillStyle = '#f00';
-        context.fillRect(component.x, component.y, component.width, component.height);
+    const drawComponent = (context: CanvasRenderingContext2D, component: Component) => {
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        if (component.path) {
+            context.translate(component.x, component.y);
+            let paths: Path[] = [];
+            if(Object.prototype.toString.call(component.path) === '[object Array]') {
+                paths = component.path as Path[];
+            } else {
+                paths = [component.path as Path]
+            }
+            paths.forEach((path) => {
+                context.strokeStyle = path.stroke || "#000";
+                context.fillStyle = path.fill || "#000";
+                const path2D = new Path2D(path.d);
+                context.fill(path2D);
+                context.stroke(path2D);
+            });
+        } else if (component.image) {
+            const {x, y, width, height} = component;
+            // context.drawImage(component.image, x, y, width * window.devicePixelRatio, height * window.devicePixelRatio);
+            context.drawImage(component.image, x, y, width, height);
+        }
 
         if (component.isActive) drawComponentSelection(context, component);
     }
 
-    const drawComponentSelection = (context, component: Component) => {
+    const drawComponentSelection = (context: CanvasRenderingContext2D, component: Component) => {
+        context.setTransform(1, 0, 0, 1, 0, 0);
         context.strokeStyle = "#009";
         context.strokeRect(component.x - 1, component.y - 1, component.width + 2, component.height + 2);
     }
 
-    const drawConnector = (context, connector: Connector) => {
+    const drawConnector = (context: CanvasRenderingContext2D, connector: Connector) => {
+        context.setTransform(1, 0, 0, 1, 0, 0);
         if (connector.fromComponent && connector.toComponent) {
             context.fillStyle = connector.isActive ? "#009" : "#000";
             context.strokeStyle = connector.isActive ? "#009" : "#000";
@@ -133,7 +154,8 @@ const Canvas = (props: CanvasPropTyep) => {
         }
     }
 
-    const drawPage = (context, page: Page) => {
+    const drawPage = (context: CanvasRenderingContext2D, page: Page) => {
+        context.setTransform(1, 0, 0, 1, 0, 0);
         context.clearRect(0, 0, page.width, page.height)
 
         context.fillStyle = '#eee';
@@ -269,6 +291,7 @@ const Canvas = (props: CanvasPropTyep) => {
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        const context: CanvasRenderingContext2D = canvas.getContext("2d");
 
         // events
         canvas.addEventListener("mousedown", handleCanvasClick);
@@ -276,13 +299,16 @@ const Canvas = (props: CanvasPropTyep) => {
         canvas.onmouseup = handleCanvasMouseUp;
         canvas.onmousemove = handleCanvasMouseMove;
         window.onkeydown = handleWindowKeyDown;
+
+        // custom events
+        window.addEventListener("componentimageload", () => drawPage(context, page));
     }, []);
 
     useEffect(() => {
         if (!page.isDeserialized) return;
 
         const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
+        const context: CanvasRenderingContext2D = canvas.getContext("2d");
 
         drawPage(context, page);
     }, [page, activeItem, activeItemRef.current, activeItemLocation, isDraggingRef.current]);
