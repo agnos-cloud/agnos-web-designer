@@ -320,6 +320,7 @@ const Canvas = (props: CanvasPropTyep) => {
     const handleWindowKeyDown = (e: KeyboardEvent) => {
         if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
             if (activeItemRef.current && activeItemRef.current instanceof Component) {
+                e.preventDefault();
                 const item = page.items.find((item) => item.id === activeItemRef.current.id);
                 if (item) {
                     if (e.code === "ArrowUp") item.y = item.y - 5;
@@ -327,6 +328,51 @@ const Canvas = (props: CanvasPropTyep) => {
                     if (e.code === "ArrowLeft") item.x = item.x - 5;
                     if (e.code === "ArrowRight") item.x = item.x + 5;
                     setActiveItemLocation({ x: item.x, y: item.y });
+                }
+            }
+        }
+    }
+
+    const handleWindowKeyDown2 = (e: KeyboardEvent) => {
+        if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
+            if (activeItemRef.current && activeItemRef.current instanceof Component) {
+                e.preventDefault();
+                const item = page.items.find((item) => item.id === activeItemRef.current.id);
+                if (item) {
+                    const body = document.body;
+                    const html = document.documentElement;
+                    const canvas = canvasRef.current;
+                    const rect = canvas.getBoundingClientRect();
+
+                    if (rect.width - (item.x + item.width) < 50) {
+                        const width = rect.width + item.width + 200;
+                        canvas.width = width;
+                        page.width = width;
+                        canvas.style.width = `${width}px`;
+                    }
+    
+                    if (rect.height - (item.y + item.height) < 50) {
+                        const height = rect.height + item.height + 200;
+                        canvas.height = height;
+                        page.height = height;
+                        canvas.style.height = `${height}px`;
+                    }
+
+                    if ((window.innerWidth + (html.scrollLeft || body.scrollLeft)) - (item.x + item.width) < 50) {
+                        body.scrollLeft += 10;
+                        html.scrollLeft += 10;
+                    } else if (item.x - (html.scrollLeft || body.scrollLeft) < 50) {
+                        body.scrollLeft -= 10;
+                        html.scrollLeft -= 10;
+                    }
+
+                    if ((window.innerHeight + (html.scrollTop || body.scrollTop)) - (item.y + item.height) < 50) {
+                        body.scrollTop += 10;
+                        html.scrollTop += 10;
+                    } else if (item.y - (html.scrollTop || body.scrollTop) < 50) {
+                        body.scrollTop -= 10;
+                        html.scrollTop -= 10;
+                    }
                 }
             }
         }
@@ -355,14 +401,26 @@ const Canvas = (props: CanvasPropTyep) => {
         // events
         canvas.addEventListener("mousedown", handleCanvasClick);
         canvas.addEventListener("mousedown", handleCanvasMouseDown);
-        canvas.onmouseup = handleCanvasMouseUp;
-        // canvas.onmousemove = handleCanvasMouseMove;
+        canvas.addEventListener("mouseup", handleCanvasMouseUp);
         canvas.addEventListener("mousemove", handleCanvasMouseMove);
         canvas.addEventListener("mousemove", handleCanvasMouseMove2);
-        window.onkeydown = handleWindowKeyDown;
+        window.addEventListener("keydown", handleWindowKeyDown);
+        window.addEventListener("keydown", handleWindowKeyDown2);
 
         // custom events
-        window.addEventListener("componentimageload", () => drawPage(context, page));
+        const handleComponentImageLoad = () => drawPage(context, page);
+        window.addEventListener("componentimageload", handleComponentImageLoad);
+
+        return () => {
+            canvas.removeEventListener("mousedown", handleCanvasClick);
+            canvas.removeEventListener("mousedown", handleCanvasMouseDown);
+            canvas.removeEventListener("mouseup", handleCanvasMouseUp);
+            canvas.removeEventListener("mousemove", handleCanvasMouseMove);
+            canvas.removeEventListener("mousemove", handleCanvasMouseMove2);
+            window.removeEventListener("keydown", handleWindowKeyDown);
+            window.removeEventListener("keydown", handleWindowKeyDown2);
+            window.removeEventListener("componentimageload", handleComponentImageLoad);
+        };
     }, []);
 
     useEffect(() => {
