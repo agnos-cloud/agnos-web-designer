@@ -6,8 +6,8 @@ export default function Root(props) {
   // get the appropriate canvas with its items (components and connectors)
   const page = new Page();
   page.deserializeFromJSON(`{
-    "height": 1000,
-    "width": 1000,
+    "height": 2000,
+    "width": 2000,
     "items": [{
       "id": "comp1",
       "type": "component",

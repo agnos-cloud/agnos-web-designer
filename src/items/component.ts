@@ -31,8 +31,8 @@ class Component extends Item {
         } else if (json.image && json.image.src) {
             const img = document.createElement("img");
             img.src = json.image.src;
-            img.width = this.width * window.devicePixelRatio;
-            img.height = this.height * window.devicePixelRatio;
+            img.width = this.width;
+            img.height = this.height;
             img.addEventListener('load', () => {
                 this.image = img;
                 // fire a custom event to force the canvas to refresh
