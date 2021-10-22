@@ -38,7 +38,6 @@ const Canvas = (props: CanvasPropTyep) => {
             });
         } else if (component.image) {
             const {x, y, width, height} = component;
-            // context.drawImage(component.image, x, y, width * window.devicePixelRatio, height * window.devicePixelRatio);
             context.drawImage(component.image, x, y, width, height);
         }
 
@@ -163,6 +162,8 @@ const Canvas = (props: CanvasPropTyep) => {
         context.fillStyle = '#eee';
         context.fillRect(0, 0, page.width, page.height);
 
+        // context.imageSmoothingEnabled = false;
+
         page.items
             .filter((item) => item instanceof Component)
             .sort((a, b) => a.z - b.z)
@@ -276,9 +277,52 @@ const Canvas = (props: CanvasPropTyep) => {
             }
         }
     }
+    const handleCanvasMouseMove2 = (e: MouseEvent) => {
+        if (isDraggingRef.current) {
+            if (activeItemRef.current && activeItemRef.current instanceof Component) {
+                const body = document.body; // Safari
+                const html = document.documentElement; // Chrome, Firefox, IE and Opera
+                const canvas = canvasRef.current;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (rect.width - x < (activeItemRef.current.width + 100)) {
+                    const width = rect.width + activeItemRef.current.width + 200;
+                    canvas.width = width;
+                    page.width = width;
+                    canvas.style.width = `${width}px`;
+                }
+
+                if (rect.height - y < (activeItemRef.current.height + 100)) {
+                    const height = rect.height + activeItemRef.current.height + 200;
+                    canvas.height = height;
+                    page.height = height;
+                    canvas.style.height = `${height}px`;
+                }
+
+                if (window.innerWidth - e.clientX < 150) {
+                    body.scrollLeft += 10;
+                    html.scrollLeft += 10;
+                } else if (e.clientX < 150) {
+                    body.scrollLeft -= 10;
+                    html.scrollLeft -= 10;
+                }
+
+                if (window.innerHeight - e.clientY < 150) {
+                    body.scrollTop += 10;
+                    html.scrollTop += 10;
+                } else if (e.clientY < 150) {
+                    body.scrollTop -= 10;
+                    html.scrollTop -= 10;
+                }
+            }
+        }
+    }
     const handleWindowKeyDown = (e: KeyboardEvent) => {
         if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
             if (activeItemRef.current && activeItemRef.current instanceof Component) {
+                e.preventDefault();
                 const item = page.items.find((item) => item.id === activeItemRef.current.id);
                 if (item) {
                     if (e.code === "ArrowUp") item.y = item.y - 5;
@@ -291,19 +335,94 @@ const Canvas = (props: CanvasPropTyep) => {
         }
     }
 
+    const handleWindowKeyDown2 = (e: KeyboardEvent) => {
+        if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
+            if (activeItemRef.current && activeItemRef.current instanceof Component) {
+                e.preventDefault();
+                const item = page.items.find((item) => item.id === activeItemRef.current.id);
+                if (item) {
+                    const body = document.body;
+                    const html = document.documentElement;
+                    const canvas = canvasRef.current;
+                    const rect = canvas.getBoundingClientRect();
+
+                    if (rect.width - (item.x + item.width) < 50) {
+                        const width = rect.width + item.width + 200;
+                        canvas.width = width;
+                        page.width = width;
+                        canvas.style.width = `${width}px`;
+                    }
+    
+                    if (rect.height - (item.y + item.height) < 50) {
+                        const height = rect.height + item.height + 200;
+                        canvas.height = height;
+                        page.height = height;
+                        canvas.style.height = `${height}px`;
+                    }
+
+                    if ((window.innerWidth + (html.scrollLeft || body.scrollLeft)) - (item.x + item.width) < 50) {
+                        body.scrollLeft += 10;
+                        html.scrollLeft += 10;
+                    } else if (item.x - (html.scrollLeft || body.scrollLeft) < 50) {
+                        body.scrollLeft -= 10;
+                        html.scrollLeft -= 10;
+                    }
+
+                    if ((window.innerHeight + (html.scrollTop || body.scrollTop)) - (item.y + item.height) < 50) {
+                        body.scrollTop += 10;
+                        html.scrollTop += 10;
+                    } else if (item.y - (html.scrollTop || body.scrollTop) < 50) {
+                        body.scrollTop -= 10;
+                        html.scrollTop -= 10;
+                    }
+                }
+            }
+        }
+    }
+
     useEffect(() => {
+        const body = document.getElementsByTagName('body')[0];
+        body.style.height = "100vh";
+        body.style.width = "100vw";
+
         const canvas = canvasRef.current;
+
+        const bodyRect = body.getBoundingClientRect();
+        const height = Math.max(bodyRect.height, page.height);
+        const width = Math.max(bodyRect.width, page.width);
+        canvas.height = height;
+        page.height = height;
+        canvas.style.height = `${height}px`;
+        canvas.width = width;
+        page.width = width;
+        canvas.style.width = `${width}px`;
+
+        canvas.style.imageRendering = "crisp-edges";
         const context: CanvasRenderingContext2D = canvas.getContext("2d");
 
         // events
         canvas.addEventListener("mousedown", handleCanvasClick);
         canvas.addEventListener("mousedown", handleCanvasMouseDown);
-        canvas.onmouseup = handleCanvasMouseUp;
-        canvas.onmousemove = handleCanvasMouseMove;
-        window.onkeydown = handleWindowKeyDown;
+        canvas.addEventListener("mouseup", handleCanvasMouseUp);
+        canvas.addEventListener("mousemove", handleCanvasMouseMove);
+        canvas.addEventListener("mousemove", handleCanvasMouseMove2);
+        window.addEventListener("keydown", handleWindowKeyDown);
+        window.addEventListener("keydown", handleWindowKeyDown2);
 
         // custom events
-        window.addEventListener("componentimageload", () => drawPage(context, page));
+        const handleComponentImageLoad = () => drawPage(context, page);
+        window.addEventListener("componentimageload", handleComponentImageLoad);
+
+        return () => {
+            canvas.removeEventListener("mousedown", handleCanvasClick);
+            canvas.removeEventListener("mousedown", handleCanvasMouseDown);
+            canvas.removeEventListener("mouseup", handleCanvasMouseUp);
+            canvas.removeEventListener("mousemove", handleCanvasMouseMove);
+            canvas.removeEventListener("mousemove", handleCanvasMouseMove2);
+            window.removeEventListener("keydown", handleWindowKeyDown);
+            window.removeEventListener("keydown", handleWindowKeyDown2);
+            window.removeEventListener("componentimageload", handleComponentImageLoad);
+        };
     }, []);
 
     useEffect(() => {
@@ -315,7 +434,7 @@ const Canvas = (props: CanvasPropTyep) => {
         drawPage(context, page);
     }, [page, activeItem, activeItemRef.current, activeItemLocation, isDraggingRef.current]);
 
-    return <canvas ref={canvasRef} height={page.height} width={page.width} {...otherProps}/>;
+    return <canvas ref={canvasRef} {...otherProps}/>;
 }
 
 type Point = {
