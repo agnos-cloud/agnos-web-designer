@@ -46,7 +46,7 @@ const Canvas = (props: CanvasPropTyep) => {
 
     const drawComponentSelection = (context: CanvasRenderingContext2D, component: Component) => {
         context.setTransform(1, 0, 0, 1, 0, 0);
-        context.strokeStyle = "#3aafdc";
+        context.strokeStyle = "#33CCFF";
         context.lineWidth = 2;
         context.strokeRect(component.x - 1, component.y - 1, component.width + 2, component.height + 2);
     }
@@ -54,8 +54,8 @@ const Canvas = (props: CanvasPropTyep) => {
     const drawConnector = (context: CanvasRenderingContext2D, connector: Connector) => {
         context.setTransform(1, 0, 0, 1, 0, 0);
         if (connector.fromComponent && connector.toComponent) {
-            context.fillStyle = connector.isActive ? "#3aafdc" : "#000";
-            context.strokeStyle = connector.isActive ? "#3aafdc" : "#000";
+            context.fillStyle = connector.isActive ? "#33CCFF" : "#000";
+            context.strokeStyle = connector.isActive ? "#33CCFF" : "#000";
             context.lineWidth = connector.isActive ? 5 : 3;
 
             let { x1, y1, x2, y2 } = connector;
