@@ -205,8 +205,8 @@ const Canvas = (props: CanvasPropTyep) => {
         window.addEventListener("keydown", handleWindowKeyDownToResizeAndScrollCanvas);
 
         // custom events
-        const handleComponentImageLoad = () => renderer.drawPage(context, page);
-        window.addEventListener("dirty", handleComponentImageLoad);
+        const handleWindowDirtyToForceCanvasRepaint = () => renderer.drawPage(context, page);
+        window.addEventListener("dirty", handleWindowDirtyToForceCanvasRepaint);
 
         return () => {
             canvas.removeEventListener("mousedown", handleCanvasMouseDownToSelectActiveComponent);
@@ -217,7 +217,7 @@ const Canvas = (props: CanvasPropTyep) => {
             canvas.removeEventListener("mousemove", handleCanvasMouseMoveToPerformHover);
             window.removeEventListener("keydown", handleWindowKeyDownToMoveActiveComponent);
             window.removeEventListener("keydown", handleWindowKeyDownToResizeAndScrollCanvas);
-            window.removeEventListener("dirty", handleComponentImageLoad);
+            window.removeEventListener("dirty", handleWindowDirtyToForceCanvasRepaint);
         };
     }, []);
 
