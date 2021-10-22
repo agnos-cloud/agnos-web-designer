@@ -162,6 +162,8 @@ const Canvas = (props: CanvasPropTyep) => {
         context.fillStyle = '#eee';
         context.fillRect(0, 0, page.width, page.height);
 
+        // context.imageSmoothingEnabled = false;
+
         page.items
             .filter((item) => item instanceof Component)
             .sort((a, b) => a.z - b.z)
