@@ -13,6 +13,7 @@ class Item {
     public env: { [key: string]: any } = {};
     public height: number = 100;
     public isActive: boolean = false;
+    public isHoveredOver: boolean = false;
     public page: Page;
     public width: number = 100;
     public x: number = 0;

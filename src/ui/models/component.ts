@@ -36,8 +36,7 @@ class Component extends Item {
             img.addEventListener('load', () => {
                 this.image = img;
                 // fire a custom event to force the canvas to refresh
-                const event = new Event("componentimageload");
-                window.dispatchEvent(event);
+                window.dispatchEvent(new Event("dirty"));
             });
         }
     }
