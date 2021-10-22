@@ -1,8 +1,10 @@
 import React from "react";
 import Canvas from "./canvas";
-import Page from "./items/page";
+import Page from "./ui/models/page";
+import Renderer from "./ui/interactions/renderer";
 
 export default function Root(props) {
+  const renderer = new Renderer();
   // get the appropriate canvas with its items (components and connectors)
   const page = new Page();
   page.deserializeFromJSON(`{
@@ -82,5 +84,5 @@ export default function Root(props) {
       }]
     }]
   }`);
-  return <Canvas page={page}></Canvas>;
+  return <Canvas page={page} renderer={renderer}></Canvas>;
 }
