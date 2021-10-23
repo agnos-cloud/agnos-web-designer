@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import Component, { Path } from "./ui/models/component";
+import Component from "./ui/models/component";
 import Connector from "./ui/models/connector";
 import Item from "./ui/models/item";
 import Page from "./ui/models/page";
@@ -8,10 +8,13 @@ import Renderer, { Line, Point, Rectangle } from "./ui/interactions/renderer";
 export type CanvasPropTyep = {
     page: Page;
     renderer: Renderer;
+    scale?: number;
+    setScale?: (scale: number) => any
 }
 
 const Canvas = (props: CanvasPropTyep) => {
-    const { page, renderer, ...otherProps } = props;
+    const { page, renderer, scale, setScale, ...otherProps } = props;
+    const scaleRef = useRef(scale);
     const canvasRef = useRef(null);
     const activeItemRef = useRef<Item | null>(null);
     const [activeItem, setActiveItem] = useState<Item | null>(null);
@@ -29,14 +32,26 @@ const Canvas = (props: CanvasPropTyep) => {
             item.isActive = false;
             if (activeItemRef.current) return;
             if (item instanceof Component) {
-                if(renderer.detectIntersection(item, { x, y, width: 1, height: 1 })) {
+                const itemRect: Rectangle = {
+                    x: item.x * scaleRef.current,
+                    y: item.y * scaleRef.current,
+                    width: item.width * scaleRef.current,
+                    height: item.height * scaleRef.current,
+                };
+                if(renderer.detectIntersection(itemRect, { x, y, width: 1, height: 1 })) {
                     if (!activeItemRef.current || (activeItemRef.current && activeItemRef.current.z <= item.z)) {
                         item.isActive = true;
                         activeItemRef.current = item;
                     }
                 }
             } else if (item instanceof Connector) {
-                if(renderer.detectPointInLine({ x, y }, item)) {
+                const itemLine: Line = {
+                    x1: item.x1 * scaleRef.current,
+                    y1: item.y1 * scaleRef.current,
+                    x2: item.x2 * scaleRef.current,
+                    y2: item.y2 * scaleRef.current,
+                };
+                if(renderer.detectPointInLine({ x, y }, itemLine)) {
                     if (!activeItemRef.current || (activeItemRef.current && activeItemRef.current.z <= item.z)) {
                         item.isActive = true;
                         activeItemRef.current = item;
@@ -61,8 +76,13 @@ const Canvas = (props: CanvasPropTyep) => {
     }
 
     const handleCanvasMouseMoveToPerformDrag = (e: MouseEvent) => {
-        if (isDraggingRef.current) {
-            canvasRef.current.style.cursor = "move";
+        // It's a little challenging to drag components with the canvas is scaled up
+        // Partly because when scaled up, dragging affects the canvas, not just the components on the canvas
+        // And partly because the change in mouse position (dragEnd-dragStart) cannot be scaled (multiplied by scaleRef.current)
+        // As that would make the component move faster than the mouse
+        // For now, we disable this feature whe the canvas is scaled
+        if (isDraggingRef.current && scaleRef.current === 1) {
+            canvasRef.current.style.cursor = "grabbing";
             if (activeItemRef.current && activeItemRef.current instanceof Component) {
                 const rect = canvasRef.current.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -78,7 +98,9 @@ const Canvas = (props: CanvasPropTyep) => {
         }
     }
     const handleCanvasMouseMoveToResizeAndScrollCanvas = (e: MouseEvent) => {
-        if (isDraggingRef.current) {
+        // As explained in handleCanvasMouseMoveToPerformDrag
+        // we don't attempt to move components when scale > 1
+        if (isDraggingRef.current && scaleRef.current === 1) {
             if (activeItemRef.current && activeItemRef.current instanceof Component) {
                 resizeAndScrollCanvas();
             }
@@ -90,13 +112,25 @@ const Canvas = (props: CanvasPropTyep) => {
         const y = e.clientY - rect.top;
         page.items.forEach((item) => {
             if (item instanceof Component) {
-                if(renderer.detectIntersection(item, { x, y, width: 1, height: 1 })) {
+                const itemRect: Rectangle = {
+                    x: item.x * scaleRef.current,
+                    y: item.y * scaleRef.current,
+                    width: item.width * scaleRef.current,
+                    height: item.height * scaleRef.current,
+                };
+                if(renderer.detectIntersection(itemRect, { x, y, width: 1, height: 1 })) {
                     item.isHoveredOver = true;
                 } else {
                     item.isHoveredOver = false;
                 }
             } else if (item instanceof Connector) {
-                if(renderer.detectPointInLine({ x, y }, item)) {
+                const itemLine: Line = {
+                    x1: item.x1 * scaleRef.current,
+                    y1: item.y1 * scaleRef.current,
+                    x2: item.x2 * scaleRef.current,
+                    y2: item.y2 * scaleRef.current,
+                };
+                if(renderer.detectPointInLine({ x, y }, itemLine)) {
                     item.isHoveredOver = true;
                 } else {
                     item.isHoveredOver = false;
@@ -116,7 +150,9 @@ const Canvas = (props: CanvasPropTyep) => {
     }
 
     const handleWindowKeyDownToMoveActiveComponent = (e: KeyboardEvent) => {
-        if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
+        // As explained in handleCanvasMouseMoveToPerformDrag
+        // we don't attempt to move components when scale > 1
+        if (scaleRef.current === 1 && (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight")) {
             if (activeItemRef.current && activeItemRef.current instanceof Component) {
                 e.preventDefault();
                 if (e.code === "ArrowUp") activeItemRef.current.y = activeItemRef.current.y - 5;
@@ -129,7 +165,9 @@ const Canvas = (props: CanvasPropTyep) => {
     }
 
     const handleWindowKeyDownToResizeAndScrollCanvas = (e: KeyboardEvent) => {
-        if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
+        // As explained in handleCanvasMouseMoveToPerformDrag
+        // we don't attempt to move components when scale > 1
+        if (scaleRef.current === 1 && (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight")) {
             if (activeItemRef.current && activeItemRef.current instanceof Component) {
                 e.preventDefault();
                 resizeAndScrollCanvas();
@@ -228,7 +266,12 @@ const Canvas = (props: CanvasPropTyep) => {
         const context: CanvasRenderingContext2D = canvas.getContext("2d");
 
         renderer.drawPage(context, page);
-    }, [page, activeItem, activeItemRef.current, activeItemLocation, isDraggingRef.current]);
+    }, [page, renderer, activeItem, activeItemRef.current, activeItemLocation, isDraggingRef.current]);
+
+    useEffect(() => {
+        scaleRef.current = scale;
+        setScale(scale);
+    }, [scale]);
 
     return <canvas ref={canvasRef} {...otherProps}/>;
 }
