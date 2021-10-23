@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
+import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import Canvas from "./canvas";
 import Page from "./ui/models/page";
 import Renderer from "./ui/interactions/renderer";
 
 export default function Root(props) {
+  const [scale, setScale] = useState(1);
   const renderer = new Renderer();
   // get the appropriate canvas with its items (components and connectors)
   const page = new Page();
@@ -39,6 +41,11 @@ export default function Root(props) {
       "y": 300,
       "image": {
         "src": "https://cdns.iconmonstr.com/wp-content/assets/preview/2012/240/iconmonstr-database-1.png"
+      },
+      "path": {
+        "d": "M 40,70 A 20,20 0,0,1 50,30 A 20,20 0,0,1 90,30 Q 90,60 50,90 Q 10,60 10,30 z",
+        "fill": "red",
+        "stroke": "black"
       }
     }, {
       "type": "connector",
@@ -84,5 +91,27 @@ export default function Root(props) {
       }]
     }]
   }`);
-  return <Canvas page={page} renderer={renderer}></Canvas>;
+  return (
+    <TransformWrapper
+      initialScale={1}
+      initialPositionX={0}
+      initialPositionY={0}
+      doubleClick={{ mode: scale === 1 ? "zoomIn" : "zoomOut" }}
+      panning={{ disabled: scale === 1 }}
+      onZoomStart={(_, event) => console.log(event)}
+    >
+      {({ zoomIn, zoomOut, resetTransform, state: { scale } }) => (
+        <React.Fragment>
+          <div className="tools">
+            <button onClick={() => zoomIn()}>+</button>
+            <button onClick={() => zoomOut()}>-</button>
+            <button onClick={() => resetTransform()}>x</button>
+          </div>
+          <TransformComponent>
+            <Canvas page={page} renderer={renderer} scale={scale} setScale={setScale}></Canvas>
+          </TransformComponent>
+        </React.Fragment>
+      )}
+    </TransformWrapper>
+  );
 }
