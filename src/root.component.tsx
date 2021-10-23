@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import { Fab, Action } from "react-tiny-fab";
 import Canvas from "./canvas";
 import Page from "./ui/models/page";
 import Renderer from "./ui/interactions/renderer";
@@ -89,6 +90,10 @@ export default function Root(props) {
         "fill": "red",
         "stroke": "black"
       }]
+    }, {
+      "type": "connector",
+      "fromComponent": "comp1",
+      "toComponent": "comp5"
     }]
   }`);
   return (
@@ -98,18 +103,63 @@ export default function Root(props) {
       initialPositionY={0}
       doubleClick={{ mode: scale === 1 ? "zoomIn" : "zoomOut" }}
       panning={{ disabled: scale === 1 }}
-      onZoomStart={(_, event) => console.log(event)}
     >
       {({ zoomIn, zoomOut, resetTransform, state: { scale } }) => (
         <React.Fragment>
-          <div className="tools">
-            <button onClick={() => zoomIn()}>+</button>
-            <button onClick={() => zoomOut()}>-</button>
-            <button onClick={() => resetTransform()}>x</button>
-          </div>
           <TransformComponent>
             <Canvas page={page} renderer={renderer} scale={scale} setScale={setScale}></Canvas>
           </TransformComponent>
+          <Fab
+            icon={<span>&#128736;</span>}
+            // mainButtonStyles={{}}
+            style={{ top: 0, left: 0 }}
+            event="click"
+            alwaysShowTitle={true}
+          >
+            <Action
+              style={{}}
+              text="Zoom In"
+              onClick={() => zoomIn()}
+            >
+              +
+            </Action>
+            <Action
+              style={{}}
+              text="Zoom Out"
+              onClick={() => zoomOut()}
+            >
+              -
+            </Action>
+          </Fab>
+          <Fab
+            icon={<span>&#128270;</span>}
+            // mainButtonStyles={{}}
+            style={{ bottom: 0, left: 0 }}
+            event="click"
+            alwaysShowTitle={true}
+          >
+            <Action
+              // style={{}}
+              text="Zoom In"
+              onClick={() => zoomIn()}
+            >
+              +
+            </Action>
+            <Action
+              // style={{}}
+              text="Zoom Out"
+              onClick={() => zoomOut()}
+            >
+              -
+            </Action>
+            <Action
+              // style={{}}
+              text="Reset"
+              onClick={() => resetTransform()}
+            >
+              x
+            </Action>
+          </Fab>
         </React.Fragment>
       )}
     </TransformWrapper>

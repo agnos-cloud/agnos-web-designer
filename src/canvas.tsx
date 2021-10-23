@@ -81,9 +81,9 @@ const Canvas = (props: CanvasPropTyep) => {
         // And partly because the change in mouse position (dragEnd-dragStart) cannot be scaled (multiplied by scaleRef.current)
         // As that would make the component move faster than the mouse
         // For now, we disable this feature whe the canvas is scaled
-        if (isDraggingRef.current && scaleRef.current === 1) {
+        if (isDraggingRef.current) {
             canvasRef.current.style.cursor = "grabbing";
-            if (activeItemRef.current && activeItemRef.current instanceof Component) {
+            if (scaleRef.current === 1 && activeItemRef.current && activeItemRef.current instanceof Component) {
                 const rect = canvasRef.current.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
