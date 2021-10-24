@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import ReactFlow, {
     removeElements,
     addEdge,
@@ -12,9 +12,11 @@ import ReactFlow, {
     OnLoadParams,
     Controls,
     MiniMap,
-} from 'react-flow-renderer';
+} from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
-import { AddShoppingCart, Menu as MenuIcon, MenuBook, MenuOpen, Save } from "@material-ui/icons";
+import { AddShoppingCart, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Save } from "@material-ui/icons";
+import domtoimage from "dom-to-image";
+import { saveAs } from "file-saver";
 import { Menu } from "./menus";
 
 const mainButtonStyles = { height: 40, width: 40 };
@@ -56,7 +58,8 @@ const Canvas = (prop: CanvasPropType) => {
     return (
         <ReactFlow
             elements={elements}
-            className="react-flow-basic-example"
+            id="react-flow__canvas"
+            className="react-flow__canvas"
             defaultZoom={1.5}
             minZoom={0.2}
             maxZoom={4}
@@ -100,6 +103,38 @@ const Canvas = (prop: CanvasPropType) => {
                     onClick={() => resetTransform()}
                 >
                     <Save />
+                </Action>
+                <Action
+                    style={actionButtonStyles}
+                    text="Preview Image"
+                    onClick={() => {
+                        const node = document.getElementsByClassName("react-flow__renderer")[0];
+                        if(!node) return;
+
+                        domtoimage.toBlob(node)
+                            .then(function (blob) {
+                                const link = window.URL.createObjectURL(blob);
+                                // window.location.href = link;
+                                window.open(link, '_blank').focus();
+                            });
+                    }}
+                >
+                    <Image />
+                </Action>
+                <Action
+                    style={actionButtonStyles}
+                    text="Download as PNG"
+                    onClick={() => {
+                        const node = document.getElementsByClassName("react-flow__renderer")[0];
+                        if(!node) return;
+
+                        domtoimage.toBlob(node)
+                            .then(function (blob) {
+                                saveAs(blob, "design.png");
+                            });
+                    }}
+                >
+                    <CloudDownload />
                 </Action>
                 <Action
                     style={actionButtonStyles}
