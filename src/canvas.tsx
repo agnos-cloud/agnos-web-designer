@@ -17,7 +17,9 @@ import { Fab, Action } from "react-tiny-fab";
 import { AddShoppingCart, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Save } from "@material-ui/icons";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
+import uuid from "react-native-uuid";
 import { Menu } from "./menus";
+import { nodeTypes } from "./nodes";
 
 const mainButtonStyles = { height: 40, width: 40 };
 const actionButtonStyles = { height: 36, width: 36 };
@@ -65,6 +67,7 @@ const Canvas = (prop: CanvasPropType) => {
             maxZoom={4}
             snapToGrid={true} // TODO: expose as settings
             snapGrid={[15, 15]}
+            nodeTypes={nodeTypes}
             onLoad={onLoad}
             onElementClick={onElementClick}
             onElementsRemove={onElementsRemove}
@@ -73,17 +76,17 @@ const Canvas = (prop: CanvasPropType) => {
         >
             <MiniMap
                 nodeStrokeColor={(n: Node) => {
-                if (n.style?.background) return n.style.background.toString();
-                if (n.type === 'input') return '#0041d0';
-                if (n.type === 'output') return '#ff0072';
-                if (n.type === 'default') return '#1a192b';
+                    if (n.style?.background) return n.style.background.toString();
+                    if (n.type === 'input') return '#0041d0';
+                    if (n.type === 'output') return '#ff0072';
+                    if (n.type === 'default') return '#1a192b';
 
-                return '#eee';
+                    return '#000';
                 }}
                 nodeColor={(n: Node) => {
-                if (n.style?.background) return n.style.background.toString();
+                    if (n.style?.background) return n.style.background.toString();
 
-                return '#fff';
+                    return '#eee';
                 }}
                 nodeBorderRadius={2}
             />
@@ -181,17 +184,39 @@ const Canvas = (prop: CanvasPropType) => {
                                     (els) => [
                                         ...els,
                                         {
-                                            ...action.element,
+                                            id: uuid.v4().toString(),
+                                            type: "component",
                                             position: {
                                                 x: 10,
                                                 y: 50
-                                            }
+                                            },
+                                            data: {
+                                                label: (
+                                                  <>
+                                                    {action.image && (<img src={action.image} width="98" style={{pointerEvents: "none"}} />)}
+                                                    {action.paths && action.paths.length && (
+                                                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" style={{pointerEvents: "none"}}>
+                                                            {action.paths.map((path, index) => (
+                                                                <path key={index} fill={path.fill || "black"} stroke={path.stroke || "black"} d={path.d} />
+                                                            ))}
+                                                        </svg>
+                                                    )}
+                                                  </>
+                                                ),
+                                              },
                                         }
                                     ]
                                 )
                             }
                         >
-                            {action.icon}
+                            {action.image && (<img src={action.image} width="18" />)}
+                            {action.paths && action.paths.length && (
+                                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                                    {action.paths.map((path, index) => (
+                                        <path key={index} fill={path.fill || "black"} stroke={path.stroke || "black"} d={path.d} />
+                                    ))}
+                                </svg>
+                            )}
                         </Action>
                     ))}
                 </Fab>

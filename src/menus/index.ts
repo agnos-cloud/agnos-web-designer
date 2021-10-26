@@ -10,5 +10,12 @@ export type MenuAction = {
     id: string;
     text?: string;
     icon?: JSX.Element;
-    element: FlowElement<any>;
+    image?: string;
+    paths?: MenuActionPath[];
 };
+
+export type MenuActionPath = {
+    d: string;
+    fill?: string;
+    stroke?: string;
+}
