@@ -14,13 +14,14 @@ import ReactFlow, {
     MiniMap,
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
-import { AddShoppingCart, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Save, Add } from "@material-ui/icons";
-import { Button, Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@mui/material";
+import { Add, AddShoppingCart, CloudDownload, Image, MenuOpen, Save } from "@material-ui/icons";
+import { Button, ButtonGroup, Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
 import { Menu } from "./menus";
 import { nodeTypes } from "./nodes";
+// import { Divider, Button as B, MenuItem as MM } from "@material-ui/core";
 
 const mainButtonStyles = { height: 40, width: 40 };
 const actionButtonStyles = { height: 36, width: 36 };
@@ -172,6 +173,7 @@ const Canvas = (prop: CanvasPropType) => {
             </Fab>
     
             <div style={{ position: 'absolute', left: 70, top: 20, zIndex: 4 }}>
+                <ButtonGroup variant="contained" aria-label="outlined primary button group">
                 {menus.map((menu) => (
                     <React.Fragment key={menu.id}>
                         <Button
@@ -219,8 +221,10 @@ const Canvas = (prop: CanvasPropType) => {
                                                                                 <path
                                                                                     key={index}
                                                                                     d={path.d}
-                                                                                    fill={path.fill || "black"}
-                                                                                    stroke={path.stroke || "black"}
+                                                                                    // fill={path.fill || "black"}
+                                                                                    fill={path.fill}
+                                                                                    // stroke={path.stroke || "black"}
+                                                                                    stroke={path.stroke}
                                                                                     transform={path.transform}
                                                                                     // style={CssString(path.style || "")} // TODO: catch malformed strings
                                                                                 />
@@ -247,8 +251,10 @@ const Canvas = (prop: CanvasPropType) => {
                                                         <path
                                                             key={index}
                                                             d={path.d}
-                                                            fill={path.fill || "black"}
-                                                            stroke={path.stroke || "black"}
+                                                            // fill={path.fill || "black"}
+                                                            fill={path.fill}
+                                                            // stroke={path.stroke || "black"}
+                                                            stroke={path.stroke}
                                                             transform={path.transform}
                                                             // style={CssString(path.style || "")} // TODO: catch malformed strings
                                                         />
@@ -263,6 +269,7 @@ const Canvas = (prop: CanvasPropType) => {
                         </MenuUI>
                     </React.Fragment>
                 ))}
+                </ButtonGroup>
             </div>
 
             <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
