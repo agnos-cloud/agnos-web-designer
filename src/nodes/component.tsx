@@ -69,7 +69,7 @@ const ComponentNode = ({ id, data }) => {
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                {data.alt && <div style={{ background: "#FFF", fontSize: "10px", textAlign: "center" }}>
+                {data.alt && <div style={{ fontSize: "10px", textAlign: "center" }}>
                     <div>{data.alt}</div>
                 </div>}
         </div>
