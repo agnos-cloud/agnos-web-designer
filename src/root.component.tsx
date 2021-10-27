@@ -217,7 +217,8 @@ export default function Root(props) {
 
   const menus: Menu[] = [
     {
-      id: 'menu1',
+      id: "menu1",
+      text: "Cloud",
       icon: (<span>&#128736;</span>),
       actions: [
         {
@@ -268,7 +269,8 @@ export default function Root(props) {
       ]
     },
     {
-      id: 'menu1-2',
+      id: "menu1-2",
+      text: "Devices",
       icon: (<span>&#128421;</span>), // &#128270;
       actions: [
         {

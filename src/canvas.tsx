@@ -15,6 +15,7 @@ import ReactFlow, {
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
 import { AddShoppingCart, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Save } from "@material-ui/icons";
+// import { Button, Menu as MenuUI, MenuItem as MenuItemUI } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
@@ -166,6 +167,7 @@ const Canvas = (prop: CanvasPropType) => {
                 </Action>
             </Fab>
             {menus.map((menu, index) => (
+                <>
                 <Fab
                     key={menu.id}
                     icon={menu.icon}
@@ -239,13 +241,31 @@ const Canvas = (prop: CanvasPropType) => {
                         </Action>
                     ))}
                 </Fab>
+                </>
             ))}
     
-            <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 4 }}>
-            <button onClick={resetTransform} style={{ marginRight: 5 }}>
-                reset transform
+            {/* <div style={{ position: 'absolute', left: 170, top: 16, zIndex: 4 }}>
+                {menus.map((menu) => (
+                    <div>
+                        <Button
+                            key={menu.id}
+                            id={menu.id}
+                            aria-controls="basic-menu"
+                            aria-haspopup="true"
+                            // aria-expanded={open ? "true" : undefined}
+                            // onClick={handleClick}
+                        >
+                            {menu.text}
+                        </Button>
+                    </div>
+                ))}
+            </div> */}
+
+            <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
+            <button onClick={resetTransform}>
+                reset
             </button>
-            <button onClick={logToObject}>toObject</button>
+            {/* <button onClick={logToObject}>toObject</button> */}
             </div>
         </ReactFlow>
     );
