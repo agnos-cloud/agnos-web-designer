@@ -20,7 +20,7 @@ const ComponentNode = ({ id, data }) => {
             document.removeEventListener("click", handleClick);
         };
     }, []);
-    function clickE(e) {
+    function handleMouseEnter(e) {
         if (id) {
             const component = document.getElementById(`component-${id}`);
             if (component) {
@@ -30,7 +30,7 @@ const ComponentNode = ({ id, data }) => {
         }
         // e.target.parentElement.style.boxShadow = "1px 1px 2px 1px rgba(0, 0, 0, 0.2)";
     }
-    function clickE2(e) {
+    function handleMouseLeave(e) {
         if (id) {
             const component = document.getElementById(`component-${id}`);
             if (component) {
@@ -51,22 +51,27 @@ const ComponentNode = ({ id, data }) => {
                 <Handle
                     type="target"
                     position={Position.Left}
-                    id={`${data.id}.left`}
+                    id={`${id}.left`}
                     style={{ padding: "2px", 
                             width: "2px", 
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                <div className="component" onMouseEnter={clickE} onMouseMove={clickE} onMouseLeave={clickE2} onMouseOut={clickE2} id={`component-${id}`}>{data.label}</div>
+                <div className="component" onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter} onMouseLeave={handleMouseLeave} onMouseOut={handleMouseLeave} id={`component-${id}`}>
+                    {data.label}
+                </div>
                 <Handle
                     type="source"
                     position={Position.Right}
-                    id={`${data.id}.right`}
+                    id={`${id}.right`}
                     style={{ padding: "2px", 
                             width: "2px", 
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
+                {data.alt && <div style={{ background: "#FFF", fontSize: "10px", textAlign: "center" }}>
+                    <div>{data.alt}</div>
+                </div>}
         </div>
     );
 };
