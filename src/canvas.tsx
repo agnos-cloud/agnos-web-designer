@@ -14,8 +14,8 @@ import ReactFlow, {
     MiniMap,
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
-import { AddShoppingCart, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Save } from "@material-ui/icons";
-// import { Button, Menu as MenuUI, MenuItem as MenuItemUI } from "@mui/material";
+import { AddShoppingCart, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Save, Add } from "@material-ui/icons";
+import { Button, Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
@@ -37,6 +37,7 @@ const Canvas = (prop: CanvasPropType) => {
     const { elements: initialElements, menus } = prop;
     const [rfInstance, setRfInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(initialElements);
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     useEffect(() => {
         const body = document.getElementsByTagName('body')[0];
         body.style.height = "98vh";
@@ -50,6 +51,9 @@ const Canvas = (prop: CanvasPropType) => {
         application.style.height = "100%";
         application.style.width = "100%";
     }, []);
+
+    const open = (menuId: string) => anchorEl ? anchorEl.id === `button-${menuId}` : false;
+    const handleMenuClose = () => setAnchorEl(null);
 
     const onElementsRemove = (elementsToRemove: Elements) => setElements((els) => removeElements(elementsToRemove, els));
     const onConnect = (params: Edge | Connection) => setElements((els) => addEdge(params, els));
@@ -95,7 +99,7 @@ const Canvas = (prop: CanvasPropType) => {
             <Background variant={BackgroundVariant.Dots} color="#aaa" gap={16} />
 
             <Fab
-                icon={<MenuIcon />}
+                icon={<Add />}
                 mainButtonStyles={mainButtonStyles}
                 style={{ top: 0, left: 0 }}
                 event="click"
@@ -166,100 +170,100 @@ const Canvas = (prop: CanvasPropType) => {
                     <MenuOpen />
                 </Action>
             </Fab>
-            {menus.map((menu, index) => (
-                <>
-                <Fab
-                    key={menu.id}
-                    icon={menu.icon}
-                    mainButtonStyles={mainButtonStyles}
-                    style={{ top: 0, left: 50 * (index + 1) }}
-                    event="click"
-                    alwaysShowTitle={true}
-                >
-                    {menu.actions.map((action) => (
-                        <Action
-                            key={action.id}
-                            style={actionButtonStyles}
-                            text={action.text}
-                            onClick={
-                                () => setElements(
-                                    (els) => [
-                                        ...els,
-                                        {
-                                            id: uuid.v4().toString(),
-                                            type: "component",
-                                            position: {
-                                                x: 10,
-                                                y: 50
-                                            },
-                                            data: {
-                                                label: (
-                                                  <>
-                                                    {action.image && (<img src={action.image} width="98" height="98" style={{pointerEvents: "none"}} />)}
-                                                    {action.paths && action.paths.length && (
-                                                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" viewBox="0 0 98 98" style={{pointerEvents: "none"}}>
-                                                            <g transform="scale(0.98)">
-                                                                {action.paths.map((path, index) => (
-                                                                    <path
-                                                                        key={index}
-                                                                        d={path.d}
-                                                                        fill={path.fill || "black"}
-                                                                        stroke={path.stroke || "black"}
-                                                                        transform={path.transform}
-                                                                        // style={CssString(path.style || "")} // TODO: catch malformed strings
-                                                                    />
-                                                                ))}
-                                                            </g>
-                                                        </svg>
-                                                    )}
-                                                  </>
-                                                ),
-                                                alt: action.text,
-                                              },
-                                        }
-                                    ]
-                                )
-                            }
-                        >
-                            {action.image && (<img src={action.image} width="18" />)}
-                            {action.paths && action.paths.length && (
-                                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-                                    <g transform="scale(0.18)">
-                                        {action.paths.map((path, index) => (
-                                            <path
-                                                key={index}
-                                                d={path.d}
-                                                fill={path.fill || "black"}
-                                                stroke={path.stroke || "black"}
-                                                transform={path.transform}
-                                                // style={CssString(path.style || "")} // TODO: catch malformed strings
-                                            />
-                                        ))}
-                                    </g>
-                                </svg>
-                            )}
-                        </Action>
-                    ))}
-                </Fab>
-                </>
-            ))}
     
-            {/* <div style={{ position: 'absolute', left: 170, top: 16, zIndex: 4 }}>
+            <div style={{ position: 'absolute', left: 70, top: 20, zIndex: 4 }}>
                 {menus.map((menu) => (
-                    <div>
+                    <React.Fragment key={menu.id}>
                         <Button
-                            key={menu.id}
-                            id={menu.id}
-                            aria-controls="basic-menu"
+                            id={`button-${menu.id}`}
+                            aria-controls={`menu-${menu.id}`}
                             aria-haspopup="true"
-                            // aria-expanded={open ? "true" : undefined}
-                            // onClick={handleClick}
+                            aria-expanded={open(menu.id) ? "true" : undefined}
+                            onClick={(event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget)}
                         >
                             {menu.text}
                         </Button>
-                    </div>
+                        <MenuUI
+                            id={`menu-${menu.id}`}
+                            anchorEl={anchorEl}
+                            open={open(menu.id)}
+                            onClose={handleMenuClose}
+                            MenuListProps={{
+                            'aria-labelledby': 'basic-button',
+                            }}
+                        >
+                            {menu.actions.map((action) => (
+                                <MenuItemUI
+                                    key={action.id}
+                                    onClick={
+                                        () => {
+                                            setAnchorEl(null);
+                                            setElements(
+                                                (els) => [
+                                                    ...els,
+                                                    {
+                                                        id: uuid.v4().toString(),
+                                                        type: "component",
+                                                        position: {
+                                                            x: 10,
+                                                            y: 50
+                                                        },
+                                                        data: {
+                                                            label: (
+                                                              <>
+                                                                {action.image && (<img src={action.image} width="98" height="98" style={{pointerEvents: "none"}} />)}
+                                                                {action.paths && action.paths.length && (
+                                                                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" viewBox="0 0 98 98" style={{pointerEvents: "none"}}>
+                                                                        <g transform="scale(0.98)">
+                                                                            {action.paths.map((path, index) => (
+                                                                                <path
+                                                                                    key={index}
+                                                                                    d={path.d}
+                                                                                    fill={path.fill || "black"}
+                                                                                    stroke={path.stroke || "black"}
+                                                                                    transform={path.transform}
+                                                                                    // style={CssString(path.style || "")} // TODO: catch malformed strings
+                                                                                />
+                                                                            ))}
+                                                                        </g>
+                                                                    </svg>
+                                                                )}
+                                                              </>
+                                                            ),
+                                                            alt: action.text,
+                                                          },
+                                                    }
+                                                ]
+                                            );
+                                        }
+                                    }
+                                >
+                                    <ListItemIcon>
+                                        {action.image && (<img src={action.image} width="18" />)}
+                                        {action.paths && action.paths.length && (
+                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                                                <g transform="scale(0.18)">
+                                                    {action.paths.map((path, index) => (
+                                                        <path
+                                                            key={index}
+                                                            d={path.d}
+                                                            fill={path.fill || "black"}
+                                                            stroke={path.stroke || "black"}
+                                                            transform={path.transform}
+                                                            // style={CssString(path.style || "")} // TODO: catch malformed strings
+                                                        />
+                                                    ))}
+                                                </g>
+                                            </svg>
+                                        )}
+                                    </ListItemIcon>
+                                    <ListItemText>{action.text}</ListItemText>
+                                </MenuItemUI>
+                            ))}
+                        </MenuUI>
+                    </React.Fragment>
                 ))}
-            </div> */}
+            </div>
 
             <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
             <button onClick={resetTransform}>
