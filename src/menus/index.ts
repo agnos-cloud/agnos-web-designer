@@ -18,4 +18,6 @@ export type MenuActionPath = {
     d: string;
     fill?: string;
     stroke?: string;
+    style?: string;
+    transform?: string;
 }
