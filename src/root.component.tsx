@@ -3,6 +3,7 @@ import { ArrowHeadType, Elements } from "react-flow-renderer";
 import { Storage } from "@material-ui/icons";
 import Canvas from "./canvas";
 import { Menu } from "./menus";
+import ErrorBoundary from "./error-boundary";
 
 export default function Root(props) {
   const _ = `{
@@ -287,5 +288,5 @@ export default function Root(props) {
     }
   ];
   
-  return (<React.StrictMode><Canvas elements={elements} menus={menus} /></React.StrictMode>);
+  return (<ErrorBoundary><React.StrictMode><Canvas elements={elements} menus={menus} /></React.StrictMode></ErrorBoundary>);
 }
