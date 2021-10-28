@@ -1,14 +1,16 @@
 import React from "react";
 import Canvas from "./canvas";
-import { Menu } from "./menus";
+import { Menu as MenuDefinition } from "./menu-definitions";
 import ErrorBoundary from "./error-boundary";
-import companiesMenus from "./menus/companies";
-import generalMenus from "./menus/general";
+import companiesMenuDefs from "./menu-definitions/companies";
+import generalMenuDefs from "./menu-definitions/general";
+import runtimesMenuDefs from "./menu-definitions/runtimes";
 
 export default function Root(props) {
-  const menus: Menu[] = [
-    ...generalMenus,
-    ...companiesMenus,
+  const menus: MenuDefinition[] = [
+    ...generalMenuDefs,
+    ...runtimesMenuDefs,
+    ...companiesMenuDefs,
     {
       id: "menu3",
       text: "GCP",
