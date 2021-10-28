@@ -14,6 +14,7 @@ import ReactFlow, {
     MiniMap,
     ArrowHeadType,
     ConnectionLineType,
+    updateEdge,
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
 import { Add, AddShoppingCart, CloudDownload, Image, MenuOpen, Save } from "@material-ui/icons";
@@ -77,6 +78,9 @@ const Canvas = (prop: CanvasPropType) => {
         setElements((els) => addEdge(edge, els));
     }
     const onLoad = (reactFlowInstance: OnLoadParams) => setRfInstance(reactFlowInstance);
+    // gets called after end of edge gets dragged to another source or target
+    const onEdgeUpdate = (oldEdge: Edge<any>, newConnection: Connection) =>
+        setElements((els) => updateEdge(oldEdge, newConnection, els));
   
     const logToObject = () => console.log(rfInstance?.toObject());
     const resetTransform = () => rfInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
@@ -101,6 +105,7 @@ const Canvas = (prop: CanvasPropType) => {
             onElementsRemove={onElementsRemove}
             onConnect={onConnect}
             onNodeDragStop={onNodeDragStop}
+            onEdgeUpdate={onEdgeUpdate}
         >
             <MiniMap
                 nodeStrokeColor={(n: Node) => {
