@@ -15,13 +15,14 @@ import ReactFlow, {
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
 import { Add, AddShoppingCart, CloudDownload, Image, MenuOpen, Save } from "@material-ui/icons";
-import { Button, ButtonGroup, Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@mui/material";
+import { /**Button, ButtonGroup,**/ Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@material-ui/core";
+import { Button, ButtonGroup, /**Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText**/ } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
 import { Menu } from "./menus";
 import { nodeTypes } from "./nodes";
-// import { Divider, Button as B, MenuItem as MM } from "@material-ui/core";
+
 
 const mainButtonStyles = { height: 40, width: 40 };
 const actionButtonStyles = { height: 36, width: 36 };
@@ -188,10 +189,13 @@ const Canvas = (prop: CanvasPropType) => {
                         <MenuUI
                             id={`menu-${menu.id}`}
                             anchorEl={anchorEl}
+                            getContentAnchorEl={null}
+                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                            transformOrigin={{ vertical: "top", horizontal: "left" }}
                             open={open(menu.id)}
                             onClose={handleMenuClose}
                             MenuListProps={{
-                            'aria-labelledby': 'basic-button',
+                                'aria-labelledby': 'basic-button',
                             }}
                         >
                             {menu.actions.map((action) => (
