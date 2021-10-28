@@ -25,6 +25,7 @@ import uuid from "react-native-uuid";
 import { Menu as MenuDefinition } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
+import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-arrowhead";
 
 
 const mainButtonStyles = { height: 40, width: 40 };
@@ -43,6 +44,7 @@ const Canvas = (prop: CanvasPropType) => {
     const [rfInstance, setRfInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(initialElements);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
     useEffect(() => {
         const body = document.getElementsByTagName('body')[0];
         body.style.height = "98vh";
@@ -61,7 +63,15 @@ const Canvas = (prop: CanvasPropType) => {
     const handleMenuClose = () => setAnchorEl(null);
 
     const onElementsRemove = (elementsToRemove: Elements) => setElements((els) => removeElements(elementsToRemove, els));
-    const onConnect = (params: Edge | Connection) => setElements((els) => addEdge(params, els));
+    const onConnect = (params: Edge | Connection) => {
+        const edge: Edge = {
+            ...params,
+            id: `reactflow__edge-${params.source}${params.sourceHandle}-${params.target}${params.targetHandle}`,
+            type: "smoothStepArrowHead",
+            arrowHeadType: ArrowHeadType.ArrowClosed,
+        }; 
+        setElements((els) => addEdge(edge, els));
+    }
     const onLoad = (reactFlowInstance: OnLoadParams) => setRfInstance(reactFlowInstance);
   
     const logToObject = () => console.log(rfInstance?.toObject());
@@ -80,6 +90,7 @@ const Canvas = (prop: CanvasPropType) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             key="edges"
+            connectionLineComponent={SmoothStepArrowHead}
             connectionLineType={ConnectionLineType.SmoothStep}
             onLoad={onLoad}
             onElementClick={onElementClick}
