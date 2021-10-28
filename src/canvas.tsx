@@ -12,6 +12,8 @@ import ReactFlow, {
     OnLoadParams,
     Controls,
     MiniMap,
+    ArrowHeadType,
+    ConnectionLineType,
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
 import { Add, AddShoppingCart, CloudDownload, Image, MenuOpen, Save } from "@material-ui/icons";
@@ -20,8 +22,9 @@ import { Button, ButtonGroup, /**Menu as MenuUI, MenuItem as MenuItemUI, ListIte
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
-import { Menu } from "./menus";
-import { nodeTypes } from "./nodes";
+import { Menu as MenuDefinition } from "./menu-definitions";
+import { nodeTypes } from "./custom-elements/nodes";
+import { edgeTypes } from "./custom-elements/edges";
 
 
 const mainButtonStyles = { height: 40, width: 40 };
@@ -32,7 +35,7 @@ const onElementClick = (_: React.MouseEvent<Element, MouseEvent>, element: FlowE
 
 export type CanvasPropType = {
     elements: Elements;
-    menus?: Menu[];
+    menus?: MenuDefinition[];
 }
   
 const Canvas = (prop: CanvasPropType) => {
@@ -75,6 +78,9 @@ const Canvas = (prop: CanvasPropType) => {
             snapToGrid={true} // TODO: expose as settings
             snapGrid={[15, 15]}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            key="edges"
+            connectionLineType={ConnectionLineType.SmoothStep}
             onLoad={onLoad}
             onElementClick={onElementClick}
             onElementsRemove={onElementsRemove}
