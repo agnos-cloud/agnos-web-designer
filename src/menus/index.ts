@@ -1,5 +1,3 @@
-import { FlowElement } from "react-flow-renderer";
-
 export type Menu = {
     id: string;
     text?: string;
