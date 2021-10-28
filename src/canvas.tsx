@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactFlow, {
     removeElements,
     addEdge,
@@ -23,7 +23,7 @@ import { Button, ButtonGroup, /**Menu as MenuUI, MenuItem as MenuItemUI, ListIte
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
-import { Menu as MenuDefinition } from "./menu-definitions";
+import { Menu as MenuDefinition, MenuAction } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
 import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-arrowhead";
@@ -42,9 +42,10 @@ export type CanvasPropType = {
   
 const Canvas = (prop: CanvasPropType) => {
     const { elements: initialElements, menus } = prop;
+    const reactFlowWrapper = useRef(null);
     const [rfInstance, setRfInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(initialElements);
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     useEffect(() => {
         const body = document.getElementsByTagName('body')[0];
@@ -62,6 +63,16 @@ const Canvas = (prop: CanvasPropType) => {
 
     const open = (menuId: string) => anchorEl ? anchorEl.id === `button-${menuId}` : false;
     const handleMenuClose = () => setAnchorEl(null);
+    const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
+        if (action) event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
+        // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+        // const position = rfInstance.project({
+        //     x: event.clientX - reactFlowBounds.left,
+        //     y: event.clientY - reactFlowBounds.top,
+        // });
+        // event.dataTransfer.setDragImage(event.target, position.x, position.y)
+        event.dataTransfer.effectAllowed = "move";
+    };
 
     const onElementsRemove = (elementsToRemove: Elements) => setElements((els) => removeElements(elementsToRemove, els));
     const onConnect = (params: Edge | Connection) => {
@@ -81,11 +92,63 @@ const Canvas = (prop: CanvasPropType) => {
     // gets called after end of edge gets dragged to another source or target
     const onEdgeUpdate = (oldEdge: Edge<any>, newConnection: Connection) =>
         setElements((els) => updateEdge(oldEdge, newConnection, els));
+    const onDragOver = (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    };
+    const onDrop = (event) => {
+        event.preventDefault();
+    
+        const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+        const actionStr = event.dataTransfer.getData("application/reactflow:action");
+        let action: MenuAction = { id: "" };
+        if (actionStr) action = JSON.parse(actionStr);
+
+        const position = rfInstance.project({
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+        });
+        const newNode = {
+            id: uuid.v4().toString(),
+            type: "component",
+            position,
+            // data: { label: `${type} node` },
+            data: {
+                label: (
+                <>
+                    {action.image && (<img src={action.image} width="98" height="98" style={{pointerEvents: "none"}} />)}
+                    {action.paths && action.paths.length && (
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" viewBox="0 0 98 98" style={{pointerEvents: "none"}}>
+                            <g transform="scale(0.98)">
+                                {action.paths.map((path, index) => (
+                                    <path
+                                        key={index}
+                                        d={path.d}
+                                        // fill={path.fill || "black"}
+                                        fill={path.fill}
+                                        // stroke={path.stroke || "black"}
+                                        stroke={path.stroke}
+                                        transform={path.transform}
+                                        // style={CssString(path.style || "")} // TODO: catch malformed strings
+                                    />
+                                ))}
+                            </g>
+                        </svg>
+                    )}
+                </>
+                ),
+                alt: action.text,
+            },
+        };
+    
+        setElements((es) => es.concat(newNode));
+    };
   
     const logToObject = () => console.log(rfInstance?.toObject());
     const resetTransform = () => rfInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
   
     return (
+        // <div className="reactflow-wrapper" ref={reactFlowWrapper}>
         <ReactFlow
             elements={elements}
             id="react-flow__canvas"
@@ -98,14 +161,17 @@ const Canvas = (prop: CanvasPropType) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             key="edges"
+            ref={reactFlowWrapper}
             connectionLineComponent={SmoothStepArrowHead}
             connectionLineType={ConnectionLineType.SmoothStep}
             onLoad={onLoad}
             onElementClick={onElementClick}
             onElementsRemove={onElementsRemove}
             onConnect={onConnect}
-            onNodeDragStop={onNodeDragStop}
+            // onNodeDragStop={onNodeDragStop}
             onEdgeUpdate={onEdgeUpdate}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
         >
             <MiniMap
                 nodeStrokeColor={(n: Node) => {
@@ -227,6 +293,8 @@ const Canvas = (prop: CanvasPropType) => {
                             {menu.actions.map((action) => (
                                 <MenuItemUI
                                     key={action.id}
+                                    draggable
+                                    onDragStart={(event) => handleMenuDrag(event, action)}
                                     onClick={
                                         () => {
                                             setAnchorEl(null);
@@ -236,7 +304,7 @@ const Canvas = (prop: CanvasPropType) => {
                                                     {
                                                         id: uuid.v4().toString(),
                                                         type: "component",
-                                                        position: {
+                                                        position: { // TODO: better position
                                                             x: 10,
                                                             y: 50
                                                         },
@@ -309,6 +377,7 @@ const Canvas = (prop: CanvasPropType) => {
             {/* <button onClick={logToObject}>toObject</button> */}
             </div>
         </ReactFlow>
+        // </div>
     );
 };
 
