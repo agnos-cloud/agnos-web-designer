@@ -70,10 +70,10 @@ const Canvas = (prop: CanvasPropType) => {
             type: "smoothStepArrowHead",
             arrowHeadType: ArrowHeadType.ArrowClosed,
         }; 
-        edge.data = {
-            onCancel: () => onElementsRemove([edge]),
-            text: "wow what a world"
-        };
+        // edge.data = {
+        //     onCancel: () => onElementsRemove([edge]),
+        //     text: "wow what a world"
+        // };
         setElements((els) => addEdge(edge, els));
     }
     const onLoad = (reactFlowInstance: OnLoadParams) => setRfInstance(reactFlowInstance);
