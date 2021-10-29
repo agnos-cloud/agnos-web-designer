@@ -21,7 +21,6 @@ import { AddShoppingCart, ArrowDownward, ArrowForward, CancelOutlined, CloudDown
 import { Button, ButtonGroup } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
-import uuid from "react-native-uuid";
 import dagre from "dagre";
 import { Menu as MenuDefinition, MenuAction } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";

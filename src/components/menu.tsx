@@ -51,8 +51,8 @@ const Menu = (prop: MenuPropType) => {
                 id={`menu-${id}`}
                 anchorEl={anchorElement}
                 // getContentAnchorEl={null}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                // anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                // transformOrigin={{ vertical: "top", horizontal: "left" }}
                 open={isOpen(id)}
                 onClose={handleMenuClose}
                 MenuListProps={{
