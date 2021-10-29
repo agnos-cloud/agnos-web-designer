@@ -212,7 +212,6 @@ const Canvas = (prop: CanvasPropType) => {
     const resetTransform = () => rfInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
   
     return (
-        // <div className="reactflow-wrapper" ref={reactFlowWrapper}>
         <ReactFlow
             elements={elements}
             id="react-flow__canvas"
@@ -436,19 +435,20 @@ const Canvas = (prop: CanvasPropType) => {
             </div>
 
             <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
-            <button onClick={resetTransform}>
-                <Restore  fontSize="small" />
-            </button>
-            <button onClick={() => {
-                onLayout(graphDirection);
-                setGraphDirection(graphDirection === "LR" ? "TB" : "LR");
-            }}>
-                {graphDirection === "LR" && <ArrowForward fontSize="small" />}
-                {graphDirection === "TB" && <ArrowDownward fontSize="small" />}
-            </button>
+                <ButtonGroup variant="contained" aria-label="outlined primary button group">
+                    <Button variant="outlined" size="small" onClick={resetTransform}>
+                        <Restore  fontSize="small" />
+                    </Button>
+                    <Button variant="outlined" size="small" onClick={() => {
+                        onLayout(graphDirection);
+                        setGraphDirection(graphDirection === "LR" ? "TB" : "LR");
+                    }}>
+                        {graphDirection === "LR" && <ArrowForward fontSize="small" />}
+                        {graphDirection === "TB" && <ArrowDownward fontSize="small" />}
+                    </Button>
+                </ButtonGroup>
             </div>
         </ReactFlow>
-        // </div>
     );
 };
 
