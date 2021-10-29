@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactFlow, {
     removeElements,
     addEdge,
@@ -15,14 +15,17 @@ import ReactFlow, {
     ArrowHeadType,
     ConnectionLineType,
     updateEdge,
+    isNode,
+    Position,
 } from "react-flow-renderer";
 import { Fab, Action } from "react-tiny-fab";
-import { Add, AddShoppingCart, CloudDownload, Image, MenuOpen, Save } from "@material-ui/icons";
+import { Add, AddShoppingCart, ArrowDownward, ArrowForward, CloudDownload, Image, MenuOpen, Restore, Save } from "@material-ui/icons";
 import { /**Button, ButtonGroup,**/ Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@material-ui/core";
 import { Button, ButtonGroup, /**Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText**/ } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
+import dagre from "dagre";
 import { Menu as MenuDefinition, MenuAction } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
@@ -31,6 +34,61 @@ import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-a
 
 const mainButtonStyles = { height: 40, width: 40 };
 const actionButtonStyles = { height: 36, width: 36 };
+
+const dagreGraph = new dagre.graphlib.Graph();
+dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+
+const getLayoutedElements = (elements: Elements, direction = "LR") => {
+    let nodeWidth = 100;
+    let nodeHeight = 100;
+    const isHorizontal = direction === "LR";
+    dagreGraph.setGraph({ rankdir: direction });
+
+    elements.forEach((el) => {
+        if (isNode(el)) {
+            if (el.type === "text") {
+                nodeWidth = 172;
+                nodeHeight = 36;
+            } else {
+                nodeWidth = 100;
+                nodeHeight = 100;
+            }
+
+            dagreGraph.setNode(el.id, { width: nodeWidth, height: nodeHeight });
+        } else {
+            dagreGraph.setEdge(el.source, el.target);
+        }
+    });
+
+    dagre.layout(dagreGraph);
+
+    return elements.map((el) => {
+        if (isNode(el)) {
+            if (el.type === "text") {
+                nodeWidth = 172;
+                nodeHeight = 36;
+            } else {
+                nodeWidth = 100;
+                nodeHeight = 100;
+            }
+
+            const nodeWithPosition = dagreGraph.node(el.id);
+            el.targetPosition = isHorizontal ? Position.Left : Position.Top;
+            el.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
+
+            // unfortunately we need this little hack to pass a slightly different position
+            // to notify react flow about the change. Moreover we are shifting the dagre node position
+            // (anchor=center center) to the top left so it matches the react flow node anchor point (top left).
+            el.position = {
+                x: nodeWithPosition.x - nodeWidth / 2 + Math.random() / 1000,
+                y: nodeWithPosition.y - nodeHeight / 2,
+            };
+        }
+
+        return el;
+    });
+};
   
 const onNodeDragStop = (_: React.MouseEvent<Element, MouseEvent>, node: Node) => console.log('drag stop', node);
 const onElementClick = (_: React.MouseEvent<Element, MouseEvent>, element: FlowElement) => console.log('click', element);
@@ -44,8 +102,13 @@ const Canvas = (prop: CanvasPropType) => {
     const { elements: initialElements, menus } = prop;
     const reactFlowWrapper = useRef(null);
     const [rfInstance, setRfInstance] = useState<OnLoadParams | null>(null);
-    const [elements, setElements] = useState<Elements>(initialElements);
+    const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
+    const onLayout = useCallback((direction) => {
+        const layoutedElements = getLayoutedElements(elements, direction);
+        setElements(layoutedElements);
+    }, [elements]);
 
     useEffect(() => {
         const body = document.getElementsByTagName('body')[0];
@@ -374,9 +437,15 @@ const Canvas = (prop: CanvasPropType) => {
 
             <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
             <button onClick={resetTransform}>
-                reset
+                <Restore  fontSize="small" />
             </button>
-            {/* <button onClick={logToObject}>toObject</button> */}
+            <button onClick={() => {
+                onLayout(graphDirection);
+                setGraphDirection(graphDirection === "LR" ? "TB" : "LR");
+            }}>
+                {graphDirection === "LR" && <ArrowForward fontSize="small" />}
+                {graphDirection === "TB" && <ArrowDownward fontSize="small" />}
+            </button>
             </div>
         </ReactFlow>
         // </div>
