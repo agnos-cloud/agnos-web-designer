@@ -64,13 +64,14 @@ const Canvas = (prop: CanvasPropType) => {
     const open = (menuId: string) => anchorEl ? anchorEl.id === `button-${menuId}` : false;
     const handleMenuClose = () => setAnchorEl(null);
     const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
-        if (action) event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
+        event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
         // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
         // const position = rfInstance.project({
         //     x: event.clientX - reactFlowBounds.left,
         //     y: event.clientY - reactFlowBounds.top,
         // });
-        // event.dataTransfer.setDragImage(event.target, position.x, position.y)
+        // // event.dataTransfer.setDragImage(event.target, position.x, position.y);
+        // event.dataTransfer.setDragImage(document.getElementById(`menu-item-${action.id}`), position.x, position.y);
         event.dataTransfer.effectAllowed = "move";
     };
 
@@ -293,6 +294,7 @@ const Canvas = (prop: CanvasPropType) => {
                             {menu.actions.map((action) => (
                                 <MenuItemUI
                                     key={action.id}
+                                    id={`menu-item-${action.id}`}
                                     draggable
                                     onDragStart={(event) => handleMenuDrag(event, action)}
                                     onClick={
