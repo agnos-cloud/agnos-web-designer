@@ -211,7 +211,7 @@ const Canvas = (prop: CanvasPropType) => {
             <Controls />
             <Background variant={BackgroundVariant.Dots} color="#aaa" gap={16} />
 
-            <div style={{ position: 'absolute', left: 10, top: 20, zIndex: 4 }}>
+            <div style={{ position: 'absolute', left: 0, top: 20, zIndex: 4 }}>
                 <Menu
                     id="menu-0"
                     anchorElement={anchorElement}
