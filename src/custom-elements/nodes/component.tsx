@@ -49,7 +49,7 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                         borderRadius: "5px",
                     }}
                 >
-                    {data.label}
+                    {data.content}
                 </div>
                 <Handle
                     type="source"
@@ -60,8 +60,8 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                {data.alt && <div style={{ fontSize: "10px", textAlign: "center" }}>
-                    <div>{data.alt}</div>
+                {data.text && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                    <div>{data.text}</div>
                 </div>}
         </div>
     );
