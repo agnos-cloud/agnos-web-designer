@@ -5,7 +5,6 @@ import ReactFlow, {
     Background,
     Elements,
     BackgroundVariant,
-    FlowElement,
     Node,
     Edge,
     Connection,
@@ -18,10 +17,8 @@ import ReactFlow, {
     isNode,
     Position,
 } from "react-flow-renderer";
-import { Fab, Action } from "react-tiny-fab";
-import { Add, AddShoppingCart, ArrowDownward, ArrowForward, CloudDownload, Image, MenuOpen, Restore, Save } from "@material-ui/icons";
-import { /**Button, ButtonGroup,**/ Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText } from "@material-ui/core";
-import { Button, ButtonGroup, /**Menu as MenuUI, MenuItem as MenuItemUI, ListItemIcon, ListItemText**/ } from "@mui/material";
+import { AddShoppingCart, ArrowDownward, ArrowForward, CancelOutlined, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Restore, Save } from "@material-ui/icons";
+import { Button, ButtonGroup } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import uuid from "react-native-uuid";
@@ -30,10 +27,9 @@ import { Menu as MenuDefinition, MenuAction } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
 import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-arrowhead";
-
-
-const mainButtonStyles = { height: 40, width: 40 };
-const actionButtonStyles = { height: 36, width: 36 };
+import Menu from "./components/menu";
+import { MenuActionSmallIcon } from "./utils/menu-action";
+import { createComponentFromMenuAction } from "./utils/component";
 
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -89,9 +85,6 @@ const getLayoutedElements = (elements: Elements, direction = "LR") => {
         return el;
     });
 };
-  
-const onNodeDragStop = (_: React.MouseEvent<Element, MouseEvent>, node: Node) => console.log('drag stop', node);
-const onElementClick = (_: React.MouseEvent<Element, MouseEvent>, element: FlowElement) => console.log('click', element);
 
 export type CanvasPropType = {
     elements: Elements;
@@ -103,7 +96,7 @@ const Canvas = (prop: CanvasPropType) => {
     const reactFlowWrapper = useRef(null);
     const [rfInstance, setRfInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
     const onLayout = useCallback((direction) => {
         const layoutedElements = getLayoutedElements(elements, direction);
@@ -124,8 +117,6 @@ const Canvas = (prop: CanvasPropType) => {
         application.style.width = "100%";
     }, []);
 
-    const open = (menuId: string) => anchorEl ? anchorEl.id === `button-${menuId}` : false;
-    const handleMenuClose = () => setAnchorEl(null);
     const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
         event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
         // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -172,40 +163,8 @@ const Canvas = (prop: CanvasPropType) => {
             x: event.clientX - reactFlowBounds.left,
             y: event.clientY - reactFlowBounds.top,
         });
-        const newNode = {
-            id: uuid.v4().toString(),
-            type: "component",
-            position,
-            // data: { label: `${type} node` },
-            data: {
-                label: (
-                <>
-                    {action.image && (<img src={action.image} width="98" height="98" style={{pointerEvents: "none"}} />)}
-                    {action.paths && action.paths.length && (
-                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" viewBox="0 0 98 98" style={{pointerEvents: "none"}}>
-                            <g transform="scale(0.98)">
-                                {action.paths.map((path, index) => (
-                                    <path
-                                        key={index}
-                                        d={path.d}
-                                        // fill={path.fill || "black"}
-                                        fill={path.fill}
-                                        // stroke={path.stroke || "black"}
-                                        stroke={path.stroke}
-                                        transform={path.transform}
-                                        // style={CssString(path.style || "")} // TODO: catch malformed strings
-                                    />
-                                ))}
-                            </g>
-                        </svg>
-                    )}
-                </>
-                ),
-                alt: action.text,
-            },
-        };
     
-        setElements((es) => es.concat(newNode));
+        setElements((es) => es.concat(createComponentFromMenuAction(action, position)));
     };
   
     const logToObject = () => console.log(rfInstance?.toObject());
@@ -228,10 +187,8 @@ const Canvas = (prop: CanvasPropType) => {
             connectionLineComponent={SmoothStepArrowHead}
             connectionLineType={ConnectionLineType.SmoothStep}
             onLoad={onLoad}
-            onElementClick={onElementClick}
             onElementsRemove={onElementsRemove}
             onConnect={onConnect}
-            // onNodeDragStop={onNodeDragStop}
             onEdgeUpdate={onEdgeUpdate}
             onDrop={onDrop}
             onDragOver={onDragOver}
@@ -255,181 +212,85 @@ const Canvas = (prop: CanvasPropType) => {
             <Controls />
             <Background variant={BackgroundVariant.Dots} color="#aaa" gap={16} />
 
-            <Fab
-                icon={<Add />}
-                mainButtonStyles={mainButtonStyles}
-                style={{ top: 0, left: 0 }}
-                event="click"
-                alwaysShowTitle={true}
-            >
-                <Action
-                    style={actionButtonStyles}
-                    text="Save"
-                    onClick={() => resetTransform()}
-                >
-                    <Save />
-                </Action>
-                <Action
-                    style={actionButtonStyles}
-                    text="Preview Image"
-                    onClick={() => {
-                        const node = document.getElementsByClassName("react-flow__renderer")[0];
-                        if(!node) return;
-
-                        domtoimage.toBlob(node)
-                            .then(function (blob) {
-                                const link = window.URL.createObjectURL(blob);
-                                // window.location.href = link;
-                                window.open(link, '_blank').focus();
-                            });
-                    }}
-                >
-                    <Image />
-                </Action>
-                <Action
-                    style={actionButtonStyles}
-                    text="Download as PNG"
-                    onClick={() => {
-                        const node = document.getElementsByClassName("react-flow__renderer")[0];
-                        if(!node) return;
-
-                        domtoimage.toBlob(node)
-                            .then(function (blob) {
-                                saveAs(blob, "design.png");
-                            });
-                    }}
-                >
-                    <CloudDownload />
-                </Action>
-                <Action
-                    style={actionButtonStyles}
-                    text="Get Component"
-                    onClick={() => setElements((els) => [...els, {
-                        id: '10',
-                        type: 'input',
-                        data: {
-                          label: (
-                            <>
-                              Welcome to <strong>React Flow!</strong>
-                            </>
-                          ),
+            <div style={{ position: 'absolute', left: 10, top: 20, zIndex: 4 }}>
+                <Menu
+                    id="menu-0"
+                    anchorElement={anchorElement}
+                    setAnchorElement={setAnchorElement}
+                    closeContent={<MenuIcon />}
+                    openContent={<CancelOutlined />}
+                    items={[{
+                        id: "menu-0-save",
+                        icon: (<Save />),
+                        text: "Save",
+                        onClick: () => resetTransform(),
+                    }, {
+                        id: "menu-0-download-as-image",
+                        icon: (<CloudDownload />),
+                        text: "Download Design as Image",
+                        onClick: () => {
+                            const node = document.getElementsByClassName("react-flow__renderer")[0];
+                            if(!node) return;
+    
+                            domtoimage.toBlob(node)
+                                .then(function (blob) {
+                                    saveAs(blob, "design.png");
+                                });
                         },
-                        position: { x: 350, y: 100 },
-                      }])}
-                >
-                    <AddShoppingCart />
-                </Action>
-                <Action
-                    style={actionButtonStyles}
-                    text="New Menu"
-                    onClick={() => {}}
-                >
-                    <MenuOpen />
-                </Action>
-            </Fab>
+                    }, {
+                        id: "menu-0-preview-as-image",
+                        icon: (<Image />),
+                        text: "Preview Design as Image",
+                        onClick: () => {
+                            const node = document.getElementsByClassName("react-flow__renderer")[0];
+                            if(!node) return;
+    
+                            domtoimage.toBlob(node)
+                                .then(function (blob) {
+                                    const link = window.URL.createObjectURL(blob);
+                                    // window.location.href = link;
+                                    window.open(link, '_blank').focus();
+                                });
+                        },
+                    }, {
+                        id: "menu-0-divider-1",
+                        isDivider: true,
+                    }, {
+                        id: "menu-0-install-component",
+                        icon: (<AddShoppingCart />),
+                        text: "Install Component",
+                        onClick: () => {},
+                    }, {
+                        id: "menu-0-new-menu",
+                        icon: (<MenuOpen />),
+                        text: "New Menu",
+                        onClick: () => {},
+                    }]}
+                />
+            </div>
     
             <div style={{ position: 'absolute', left: 70, top: 20, zIndex: 4 }}>
                 <ButtonGroup variant="contained" aria-label="outlined primary button group">
                 {menus.map((menu) => (
-                    <React.Fragment key={menu.id}>
-                        <Button
-                            id={`button-${menu.id}`}
-                            aria-controls={`menu-${menu.id}`}
-                            aria-haspopup="true"
-                            aria-expanded={open(menu.id) ? "true" : undefined}
-                            onClick={(event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget)}
-                        >
-                            {menu.text}
-                        </Button>
-                        <MenuUI
-                            id={`menu-${menu.id}`}
-                            anchorEl={anchorEl}
-                            getContentAnchorEl={null}
-                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                            transformOrigin={{ vertical: "top", horizontal: "left" }}
-                            open={open(menu.id)}
-                            onClose={handleMenuClose}
-                            MenuListProps={{
-                                'aria-labelledby': 'basic-button',
-                            }}
-                        >
-                            {menu.actions.map((action) => (
-                                <MenuItemUI
-                                    key={action.id}
-                                    id={`menu-item-${action.id}`}
-                                    draggable
-                                    onDragStart={(event) => handleMenuDrag(event, action)}
-                                    onClick={
-                                        () => {
-                                            setAnchorEl(null);
-                                            setElements(
-                                                (els) => [
-                                                    ...els,
-                                                    {
-                                                        id: uuid.v4().toString(),
-                                                        type: "component",
-                                                        position: { // TODO: better position
-                                                            x: 10,
-                                                            y: 50
-                                                        },
-                                                        data: {
-                                                            label: (
-                                                              <>
-                                                                {action.image && (<img src={action.image} width="98" height="98" style={{pointerEvents: "none"}} />)}
-                                                                {action.paths && action.paths.length && (
-                                                                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" viewBox="0 0 98 98" style={{pointerEvents: "none"}}>
-                                                                        <g transform="scale(0.98)">
-                                                                            {action.paths.map((path, index) => (
-                                                                                <path
-                                                                                    key={index}
-                                                                                    d={path.d}
-                                                                                    // fill={path.fill || "black"}
-                                                                                    fill={path.fill}
-                                                                                    // stroke={path.stroke || "black"}
-                                                                                    stroke={path.stroke}
-                                                                                    transform={path.transform}
-                                                                                    // style={CssString(path.style || "")} // TODO: catch malformed strings
-                                                                                />
-                                                                            ))}
-                                                                        </g>
-                                                                    </svg>
-                                                                )}
-                                                              </>
-                                                            ),
-                                                            alt: action.text,
-                                                          },
-                                                    }
-                                                ]
-                                            );
-                                        }
-                                    }
-                                >
-                                    <ListItemIcon>
-                                        {action.image && (<img src={action.image} width="18" />)}
-                                        {action.paths && action.paths.length && (
-                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-                                                <g transform="scale(0.18)">
-                                                    {action.paths.map((path, index) => (
-                                                        <path
-                                                            key={index}
-                                                            d={path.d}
-                                                            // fill={path.fill || "black"}
-                                                            fill={path.fill}
-                                                            // stroke={path.stroke || "black"}
-                                                            stroke={path.stroke}
-                                                            transform={path.transform}
-                                                            // style={CssString(path.style || "")} // TODO: catch malformed strings
-                                                        />
-                                                    ))}
-                                                </g>
-                                            </svg>
-                                        )}
-                                    </ListItemIcon>
-                                    <ListItemText>{action.text}</ListItemText>
-                                </MenuItemUI>
-                            ))}
-                        </MenuUI>
-                    </React.Fragment>
+                    <Menu
+                        key={menu.id}
+                        id ={menu.id}
+                        anchorElement={anchorElement}
+                        setAnchorElement={setAnchorElement}
+                        closeContent={menu.text}
+                        openContent={menu.text}
+                        items={menu.actions.map((action) => ({
+                            id: `menu-item-${action.id}`,
+                            draggable: true,
+                            onDragStart: (event) => handleMenuDrag(event, action),
+                            icon: <MenuActionSmallIcon action={action} />,
+                            text: action.text,
+                            onClick: () => setElements((els) => [
+                                ...els,
+                                createComponentFromMenuAction(action),
+                            ]),
+                        }))}
+                    />
                 ))}
                 </ButtonGroup>
             </div>
@@ -451,20 +312,5 @@ const Canvas = (prop: CanvasPropType) => {
         </ReactFlow>
     );
 };
-
-function CssString(str: string) {
-    const css_json = `{"${str
-      .replace(/; /g, '", "')
-      .replace(/: /g, '": "')
-      .replace(";", "")}"}`;
-  
-    const obj = JSON.parse(css_json);
-  
-    const keyValues = Object.keys(obj).map((key) => {
-      var camelCased = key.replace(/-[a-z]/g, (g) => g[1].toUpperCase());
-      return { [camelCased]: obj[key] };
-    });
-    return Object.assign({}, ...keyValues);
-}
   
 export default Canvas;
