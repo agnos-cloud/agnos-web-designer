@@ -1,4 +1,5 @@
 import React from "react";
+import uuid from "react-native-uuid";
 import { MenuAction } from "../menu-definitions";
 
 export type MenuActionIconPropType = {
@@ -10,7 +11,12 @@ export const MenuActionLargeIcon = (prop: MenuActionIconPropType) => {
     const { action, useGrayscaleIcons } = prop;
 
     if (action.image) {
-        return (<img src={action.image} width="98" height="98" style={{ pointerEvents: "none" }} />);
+        const imgId = `img-${action.id}-${uuid.v4().toString()}`;
+        if (useGrayscaleIcons) {
+            // allow little time for the img tag to be added to the DOM
+            setTimeout(() => grayscaleImage(imgId), 500);
+        }
+        return (<img id={imgId} src={action.image.src} width="98" height="98" style={{ pointerEvents: "none" }} />);
     }
     if (action.paths && action.paths.length) {
         return (
@@ -38,7 +44,7 @@ export const MenuActionSmallIcon = (prop: MenuActionIconPropType) => {
     const { action } = prop;
 
     if (action.image) {
-        return (<img src={action.image} width="18" />);
+        return (<img src={action.image.src} width="18" />);
     }
     if (action.paths && action.paths.length) {
         return (
@@ -109,5 +115,66 @@ const hexToRgba = (hex) => {
       parseInt(result[3], 16),
       a
     ] : null;
-  }
+}
+
+const grayscaleImage = (imgId: string) => {
+    const img = document.getElementById(imgId) as HTMLImageElement;
+
+    if (img) {
+        img.crossOrigin = "Anonymous";
+
+        var image = new Image();
+        image.onload = function()
+        {
+            const canvas = document.createElement("canvas");
+            canvas.height = img.height;
+            canvas.width = img.width;
+            canvas.style.imageRendering = "crisp-edges";
+            const ctx = canvas.getContext("2d");
+            try {
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                const imgData = ctx.getImageData(0, 0, img.width, img.height);
+                for (let i = 0; i < imgData.data.length; i += 4) {
+                    let greyscale = (imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2]) / 3;
+                    imgData.data[i] = greyscale;
+                    imgData.data[i + 1] = greyscale;
+                    imgData.data[i + 2] = greyscale;
+                    imgData.data[i + 3] = 255;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                const dataURL = canvas.toDataURL();
+                img.src = dataURL;
+            } catch (e) {
+                ctx.scale(0.98, 0.98);
+
+                ctx.save();
+                ctx.fillStyle = "rgb(84.313725%,35.294118%,29.019608%)";
+                ctx.fill(new Path2D("M 100 50 C 100 77.613281 77.613281 100 50 100 C 22.386719 100 0 77.613281 0 50 C 0 22.386719 22.386719 0 50 0 C 77.613281 0 100 22.386719 100 50 Z M 100 50"));
+                ctx.restore();
+
+                ctx.save();
+                ctx.strokeStyle = "rgb(100%,100%,100%)";
+                ctx.transform(2,0,0,2,0,0);
+                ctx.stroke(new Path2D("M 16 34 L 34 16"));
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.save();
+                ctx.strokeStyle = "rgb(100%,100%,100%)";
+                ctx.transform(2,0,0,2,0,0);
+                ctx.stroke(new Path2D("M 16 16 L 34 34"));
+                ctx.restore();
+
+                ctx.font = "10px serif";
+                ctx.fillText("Error loading image", 10, 90);
+
+                const imgData = ctx.getImageData(0, 0, img.width, img.height);
+                ctx.putImageData(imgData, 0, 0);
+                const dataURL = canvas.toDataURL();
+                img.src = dataURL;
+            }
+        };
+        image.src = img.src;
+    }
+}
   

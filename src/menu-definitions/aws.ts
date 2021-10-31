@@ -379,7 +379,16 @@ const menuDefs: Menu[] = [{
                 d: "M 62.351562 58.832031 L 50 57.863281 L 37.648438 58.832031 L 50 60.042969 Z M 62.351562 58.832031",
                 fill: "rgb(71.372549%,78.823529%,61.176471%)",
             }]
-        }
+        }, 
+        // {
+        //     id: "test",
+        //     text: "Text",
+        //     image: {
+        //         // src: "https://image.shutterstock.com/z/stock-vector-flat-data-storage-icon-for-web-221924383.jpg",
+        //         // src: "https://cdns.iconmonstr.com/wp-content/assets/preview/2012/240/iconmonstr-database-1.png"
+        //         src: "https://www.giantbomb.com/a/uploads/original/15/153607/3299603-mario.jpg"
+        //     },
+        // }
     ]
 }];
 
