@@ -95,7 +95,7 @@ const Canvas = (prop: CanvasPropType) => {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
-    const [useBlackIcons, setUseBlackIcons] = useState(false);
+    const [useGrayscaleIcons, setUseGrayscaleIcons] = useState(false);
     const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
     const onLayout = useCallback((direction) => {
@@ -117,7 +117,7 @@ const Canvas = (prop: CanvasPropType) => {
         application.style.width = "100%";
     }, []);
 
-    const handleUseBlackIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseBlackIcons(event.target.checked);;
+    const handleUseGrayscaleIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseGrayscaleIcons(event.target.checked);;
     const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
         event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
         // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -165,7 +165,7 @@ const Canvas = (prop: CanvasPropType) => {
             y: event.clientY - reactFlowBounds.top,
         });
     
-        setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useBlackIcons })));
+        setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useGrayscaleIcons })));
     };
   
     const logToObject = () => console.log(reactFlowInstance?.toObject());
@@ -292,7 +292,7 @@ const Canvas = (prop: CanvasPropType) => {
                                 text: action.text,
                                 onClick: () => setElements((els) => [
                                     ...els,
-                                    createComponentFromMenuAction(action, { useBlackIcons }),
+                                    createComponentFromMenuAction(action, { useGrayscaleIcons }),
                                 ]),
                             })
                         )}
@@ -321,12 +321,15 @@ const Canvas = (prop: CanvasPropType) => {
                     control={
                         <Switch
                             size="small"
-                            checked={useBlackIcons}
+                            checked={useGrayscaleIcons}
                             inputProps={{ 'aria-label': 'controlled' }}
-                            onChange={handleUseBlackIconsSwitchChange}
+                            onChange={handleUseGrayscaleIconsSwitchChange}
                         />
                     }
-                    label="use black icons"
+                    label="use grayscale icons"
+                    style={{
+                        color: useGrayscaleIcons ? "#1976d2" : "gray"
+                    }}
                 />
             </div>
         </ReactFlow>
