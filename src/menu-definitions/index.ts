@@ -10,6 +10,7 @@ export type MenuAction = {
     text?: string;
     icon?: JSX.Element;
     image?: string;
+    isDivider?: boolean;
     paths?: MenuActionPath[];
 };
 

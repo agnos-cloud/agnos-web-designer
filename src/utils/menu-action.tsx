@@ -2,11 +2,12 @@ import React from "react";
 import { MenuAction } from "../menu-definitions";
 
 export type MenuActionIconPropType = {
-    action: MenuAction
+    action: MenuAction,
+    useBlackIcons?: boolean;
 }
 
 export const MenuActionLargeIcon = (prop: MenuActionIconPropType) => {
-    const { action } = prop;
+    const { action, useBlackIcons } = prop;
 
     if (action.image) {
         return (<img src={action.image} width="98" height="98" style={{ pointerEvents: "none" }} />);
@@ -19,8 +20,8 @@ export const MenuActionLargeIcon = (prop: MenuActionIconPropType) => {
                         <path
                             key={index}
                             d={path.d}
-                            fill={path.fill}
-                            stroke={path.stroke}
+                            fill={path.fill && !useBlackIcons ? path.fill : ""}
+                            stroke={path.stroke && !useBlackIcons ? path.stroke : ""}
                             transform={path.transform}
                             // style={CssString(path.style || "")}
                         />
