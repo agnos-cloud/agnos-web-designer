@@ -166,7 +166,8 @@ const grayscaleImage = (imgId: string) => {
                 ctx.restore();
 
                 ctx.font = "10px serif";
-                ctx.fillText("Error loading image", 10, 90);
+                ctx.fillText("Error grayscaling image", 2, 90);
+                ctx.strokeText("Error grayscaling image", 2, 90);
 
                 const imgData = ctx.getImageData(0, 0, img.width, img.height);
                 ctx.putImageData(imgData, 0, 0);
