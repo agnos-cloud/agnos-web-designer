@@ -17,8 +17,8 @@ import ReactFlow, {
     isNode,
     Position,
 } from "react-flow-renderer";
-import { AddShoppingCart, ArrowDownward, ArrowForward, CancelOutlined, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Restore, Save } from "@material-ui/icons";
-import { Button, ButtonGroup } from "@mui/material";
+import { AddShoppingCart, ArrowDownward, ArrowForward, Close, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Restore, Save } from "@material-ui/icons";
+import { Button, ButtonGroup, FormControlLabel, Switch } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import dagre from "dagre";
@@ -93,8 +93,9 @@ export type CanvasPropType = {
 const Canvas = (prop: CanvasPropType) => {
     const { elements: initialElements, menus } = prop;
     const reactFlowWrapper = useRef(null);
-    const [rfInstance, setRfInstance] = useState<OnLoadParams | null>(null);
+    const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
+    const [useGrayscaleIcons, setUseGrayscaleIcons] = useState(false);
     const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
     const onLayout = useCallback((direction) => {
@@ -116,6 +117,7 @@ const Canvas = (prop: CanvasPropType) => {
         application.style.width = "100%";
     }, []);
 
+    const handleUseGrayscaleIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseGrayscaleIcons(event.target.checked);;
     const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
         event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
         // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -142,7 +144,7 @@ const Canvas = (prop: CanvasPropType) => {
         // };
         setElements((els) => addEdge(edge, els));
     }
-    const onLoad = (reactFlowInstance: OnLoadParams) => setRfInstance(reactFlowInstance);
+    const onLoad = (reactFlowInstance: OnLoadParams) => setReactFlowInstance(reactFlowInstance);
     // gets called after end of edge gets dragged to another source or target
     const onEdgeUpdate = (oldEdge: Edge<any>, newConnection: Connection) =>
         setElements((els) => updateEdge(oldEdge, newConnection, els));
@@ -158,16 +160,16 @@ const Canvas = (prop: CanvasPropType) => {
         let action: MenuAction = { id: "" };
         if (actionStr) action = JSON.parse(actionStr);
 
-        const position = rfInstance.project({
+        const position = reactFlowInstance.project({
             x: event.clientX - reactFlowBounds.left,
             y: event.clientY - reactFlowBounds.top,
         });
     
-        setElements((es) => es.concat(createComponentFromMenuAction(action, position)));
+        setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useGrayscaleIcons })));
     };
   
-    const logToObject = () => console.log(rfInstance?.toObject());
-    const resetTransform = () => rfInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
+    const logToObject = () => console.log(reactFlowInstance?.toObject());
+    const resetTransform = () => reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
   
     return (
         <ReactFlow
@@ -217,7 +219,7 @@ const Canvas = (prop: CanvasPropType) => {
                     anchorElement={anchorElement}
                     setAnchorElement={setAnchorElement}
                     closeContent={<MenuIcon />}
-                    openContent={<CancelOutlined />}
+                    openContent={<Close />}
                     items={[{
                         id: "menu-0-save",
                         icon: (<Save />),
@@ -278,17 +280,22 @@ const Canvas = (prop: CanvasPropType) => {
                         setAnchorElement={setAnchorElement}
                         closeContent={menu.text}
                         openContent={menu.text}
-                        items={menu.actions.map((action) => ({
-                            id: `menu-item-${action.id}`,
-                            draggable: true,
-                            onDragStart: (event) => handleMenuDrag(event, action),
-                            icon: <MenuActionSmallIcon action={action} />,
-                            text: action.text,
-                            onClick: () => setElements((els) => [
-                                ...els,
-                                createComponentFromMenuAction(action),
-                            ]),
-                        }))}
+                        items={menu.actions.map((action) =>
+                            action.isDivider ? ({
+                                id: `menu-item-${action.id}`,
+                                isDivider: true,
+                            }) : ({
+                                id: `menu-item-${action.id}`,
+                                draggable: true,
+                                onDragStart: (event) => handleMenuDrag(event, action),
+                                icon: <MenuActionSmallIcon action={action} />,
+                                text: action.text,
+                                onClick: () => setElements((els) => [
+                                    ...els,
+                                    createComponentFromMenuAction(action, { useGrayscaleIcons }),
+                                ]),
+                            })
+                        )}
                     />
                 ))}
                 </ButtonGroup>
@@ -307,6 +314,23 @@ const Canvas = (prop: CanvasPropType) => {
                         {graphDirection === "TB" && <ArrowDownward fontSize="small" />}
                     </Button>
                 </ButtonGroup>
+            </div>
+
+            <div style={{ position: 'absolute', left: 150, bottom: 10, zIndex: 4 }}>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            size="small"
+                            checked={useGrayscaleIcons}
+                            inputProps={{ 'aria-label': 'controlled' }}
+                            onChange={handleUseGrayscaleIconsSwitchChange}
+                        />
+                    }
+                    label="use grayscale icons"
+                    style={{
+                        color: useGrayscaleIcons ? "#1976d2" : "gray"
+                    }}
+                />
             </div>
         </ReactFlow>
     );

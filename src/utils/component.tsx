@@ -3,12 +3,17 @@ import uuid from "react-native-uuid";
 import { MenuAction } from "../menu-definitions";
 import { MenuActionLargeIcon } from "./menu-action";
 
-export const createComponentFromMenuAction = (action: MenuAction, position: XYPosition = { x: 10, y: 50 }) => ({
+export type CreateComponentOptions = {
+    position?: XYPosition;
+    useGrayscaleIcons?: boolean;
+};
+
+export const createComponentFromMenuAction = (action: MenuAction, options?: CreateComponentOptions) => ({
     id: uuid.v4().toString(),
     type: "component",
-    position,
+    position: options?.position || { x: 10, y: 50 },
     data: {
         text: action.text,
-        content: (<MenuActionLargeIcon action={action} />)
+        content: (<MenuActionLargeIcon action={action} useGrayscaleIcons={options?.useGrayscaleIcons} />)
     },
 })

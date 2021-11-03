@@ -21,13 +21,19 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
         }
     }
     return (
-        <div style={{
-            // background: "#eee", 
-            //padding: "10px", 
-            width: "100px", 
-            height: "100px",
-            border: "1px",
-            borderRadius: "5px" }}>
+        <div
+            onClick={() => {
+                window.dispatchEvent(new Event("nodeclick"));
+            }}
+            style={{
+                // background: "#eee", 
+                //padding: "10px", 
+                width: "100px", 
+                height: "100px",
+                border: "1px",
+                borderRadius: "5px"
+            }}
+        >
                 <Handle
                     type="target"
                     position={targetPosition === "top" ? Position.Top : Position.Left}
