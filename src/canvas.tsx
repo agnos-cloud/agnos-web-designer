@@ -90,8 +90,8 @@ export type CanvasPropType = {
     menus?: MenuDefinition[];
 }
   
-const Canvas = (prop: CanvasPropType) => {
-    const { elements: initialElements, menus } = prop;
+const Canvas = (props: CanvasPropType) => {
+    const { elements: initialElements, menus } = props;
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
@@ -335,5 +335,5 @@ const Canvas = (prop: CanvasPropType) => {
         </ReactFlow>
     );
 };
-  
+
 export default Canvas;
