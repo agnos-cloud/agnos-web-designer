@@ -1,14 +1,38 @@
 import localforage from "./localforageconfig";
 import uuid from "react-native-uuid";
 import { Repository } from ".";
+import { FlowExportObject } from "react-flow-renderer";
 
-export default class LocalStorage<T extends { id?: string }> implements Repository<T> {
-    get(id: string) {
-        return localforage.getItem(id) as Promise<T>;
+export class LocalStorage<T extends { id?: string }> implements Repository<T> {
+    private _store: LocalForage;
+    constructor(storeName: string) {
+        this._store = localforage.createInstance({
+            storeName
+        });
     }
-    save(data: T) {
+    async get(id: string) {
+        return this._store.getItem(id) as Promise<T>;
+    }
+    async save(data: T) {
         if (!data) return;
         data.id ||= uuid.v4().toString();
-        localforage.setItem(data.id, data);
+        return this._store.setItem(data.id, data) as Promise<T>;
+    }
+}
+
+export type Flow = {
+    id?: string;
+    flow: FlowExportObject<any>;
+}
+
+export class FlowLocalStorage extends LocalStorage<Flow> {
+    constructor() {
+        super("flows");
+    }
+}
+
+export class MenuLocalStorage extends LocalStorage<any> {
+    constructor() {
+        super("menus");
     }
 }
