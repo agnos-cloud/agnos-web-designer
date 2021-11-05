@@ -16,6 +16,7 @@ import ReactFlow, {
     updateEdge,
     isNode,
     Position,
+    useZoomPanHelper,
 } from "react-flow-renderer";
 import { AddShoppingCart, ArrowDownward, ArrowForward, Close, CloudDownload, Image, Menu as MenuIcon, MenuOpen, Restore, Save } from "@material-ui/icons";
 import { Button, ButtonGroup, FormControlLabel, Switch } from "@mui/material";
@@ -29,6 +30,9 @@ import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-a
 import Menu from "./components/menu";
 import { MenuActionSmallIcon } from "./utils/menu-action";
 import { createComponentFromMenuAction } from "./utils/component";
+import { FlowLocalStorage } from "./data/local";
+
+const flowLocalStorage = new FlowLocalStorage();
 
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -88,10 +92,11 @@ const getLayoutedElements = (elements: Elements, direction = "LR") => {
 export type CanvasPropType = {
     elements: Elements;
     menus?: MenuDefinition[];
+    designId?: string;
 }
   
 const Canvas = (props: CanvasPropType) => {
-    const { elements: initialElements, menus } = props;
+    const { elements: initialElements, menus, designId } = props;
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
@@ -116,6 +121,74 @@ const Canvas = (props: CanvasPropType) => {
         application.style.height = "100%";
         application.style.width = "100%";
     }, []);
+
+    const { transform } = useZoomPanHelper();
+    const onSave = useCallback(() => {
+        if (reactFlowInstance) {
+            if (designId) {
+                const flow = reactFlowInstance.toObject();
+                const elementsToSave = flow.elements.map((el) => {
+                    if (isNode(el)) {
+                        return {
+                            id: el.id,
+                            type: el.type,
+                            position: el.position,
+                            data: {
+                                text: el.data["text"],
+                                content: {
+                                    props: el.data["content"]["props"],
+                                },
+                            },
+                        };
+                    }
+                    return el;
+                });
+                flowLocalStorage.save({
+                    id: designId,
+                    flow: {
+                        ...flow,
+                        elements: elementsToSave,
+                    },
+                });
+            } else {
+                // TODO:
+            }
+        }
+    }, [reactFlowInstance, designId]);
+    useEffect(() => {
+        const restoreFlow = async () => {
+            if (!designId) return;
+            
+            const flowContainer = await flowLocalStorage.get(designId);
+            if (!flowContainer) return;
+
+            const { flow } = flowContainer;
+
+            if (flow) {
+                const [x = 0, y = 0] = flow.position;
+                const elementsToRestore = flow.elements.map((el) => {
+                    if (isNode(el)) {
+                        let action: MenuAction = {
+                            id: "",
+                            ...el.data["content"]["props"]["action"],
+                        };
+                        const useGrayscaleIcons = el.data["content"]["props"]["useGrayscaleIcons"];
+                    
+                        return createComponentFromMenuAction(action, {
+                            id: el.id,
+                            position: el.position,
+                            useGrayscaleIcons
+                        });
+                    }
+                    return el;
+                });
+                setElements(elementsToRestore || []);
+                transform({ x, y, zoom: flow.zoom || 0 });
+            }
+        };
+    
+        restoreFlow();
+    }, [setElements, transform, designId]);
 
     const handleUseGrayscaleIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseGrayscaleIcons(event.target.checked);;
     const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
@@ -168,7 +241,6 @@ const Canvas = (props: CanvasPropType) => {
         setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useGrayscaleIcons })));
     };
   
-    const logToObject = () => console.log(reactFlowInstance?.toObject());
     const resetTransform = () => reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
   
     return (
@@ -224,7 +296,7 @@ const Canvas = (props: CanvasPropType) => {
                         id: "menu-0-save",
                         icon: (<Save />),
                         text: "Save",
-                        onClick: () => resetTransform(),
+                        onClick: () => onSave(),
                     }, {
                         id: "menu-0-download-as-image",
                         icon: (<CloudDownload />),

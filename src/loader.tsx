@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ReactFlowProvider } from "react-flow-renderer";
 import { withRouter, RouteComponentProps } from "react-router";
 import { useParams  } from "react-router-dom";
 import Canvas from "./canvas";
@@ -24,7 +25,9 @@ const Loader = (props: LoaderProps) => {
     ];
 
     return (
-        <Canvas elements={[]} menus={menus} />
+        <ReactFlowProvider>
+            <Canvas elements={[]} menus={menus} designId={props.match.params["id"]} />
+        </ReactFlowProvider>
     );
 }
 
