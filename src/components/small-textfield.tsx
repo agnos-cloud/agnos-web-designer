@@ -6,10 +6,11 @@ const styles = {
     textField: {
         height: 8,
         fontSize: 10,
+        padding: 5,
     }
 }
 
-const TextField = (props) => {
+const SmallTextField = (props) => {
 
     const { classes, ...otherProps } = props;
 
@@ -21,4 +22,4 @@ const TextField = (props) => {
     );
 };
 
-export default withStyles(styles)(TextField);
+export default withStyles(styles)(SmallTextField);
