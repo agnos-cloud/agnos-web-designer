@@ -28,7 +28,7 @@ import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
 import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-arrowhead";
 import Menu from "./components/menu";
-import { MenuActionSmallIcon } from "./utils/menu-action";
+import MenuActionIcon from "./components/menu-action-icon";
 import { createComponentFromMenuAction } from "./utils/component";
 import { FlowLocalStorage } from "./data/local";
 
@@ -360,7 +360,7 @@ const Canvas = (props: CanvasPropType) => {
                                 id: `menu-item-${action.id}`,
                                 draggable: true,
                                 onDragStart: (event) => handleMenuDrag(event, action),
-                                icon: <MenuActionSmallIcon action={action} />,
+                                icon: <MenuActionIcon action={action} />,
                                 text: action.text,
                                 onClick: () => setElements((els) => [
                                     ...els,

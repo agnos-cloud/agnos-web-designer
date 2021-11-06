@@ -1,7 +1,13 @@
 import React, { useEffect } from "react";
 import { Handle, Position } from "react-flow-renderer";
+import uuid from "react-native-uuid";
+import { MenuAction } from "../../menu-definitions";
+import { grayscale, grayscaleImage } from "../../utils/image";
 
 const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) => {
+    const action: MenuAction = data.action;
+    const useGrayscaleIcons: boolean = data.useGrayscaleIcons;
+    
     function handleMouseEnter(e) {
         if (id) {
             const component = document.getElementById(`component-${id}`);
@@ -55,7 +61,7 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                         borderRadius: "5px",
                     }}
                 >
-                    {data.content}
+                    {getContent(action, useGrayscaleIcons)}
                 </div>
                 <Handle
                     type="source"
@@ -66,11 +72,42 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                {data.text && <div style={{ fontSize: "10px", textAlign: "center" }}>
-                    <div>{data.text}</div>
+                {action && action.text && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                    <div>{action.text}</div>
                 </div>}
         </div>
     );
 };
+
+const getContent = (action: MenuAction, useGrayscaleIcons: boolean) => {
+    if (action.image) {
+        const imgId = `img-${action.id}-${uuid.v4().toString()}`;
+        if (useGrayscaleIcons) {
+            // allow little time for the img tag to be added to the DOM
+            setTimeout(() => grayscaleImage(imgId), 500);
+        }
+        return (<img id={imgId} src={action.image.src} width="98" height="98" style={{ pointerEvents: "none" }} />);
+    }
+    if (action.paths && action.paths.length) {
+        return (
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="98" height="98" viewBox="0 0 98 98" style={{ pointerEvents: "none" }}>
+                <g transform="scale(0.98)">
+                    {action.paths.map((path, index) => (
+                        <path
+                            key={index}
+                            d={path.d}
+                            fill={!path.fill ? "" : useGrayscaleIcons ? grayscale(path.fill) : path.fill}
+                            stroke={!path.stroke ? "" : useGrayscaleIcons ? grayscale(path.stroke) : path.stroke}
+                            transform={path.transform}
+                            // style={CssString(path.style || "")}
+                        />
+                    ))}
+                </g>
+            </svg>
+        );
+    }
+
+    return <></>;
+}
 
 export default ComponentNode;
