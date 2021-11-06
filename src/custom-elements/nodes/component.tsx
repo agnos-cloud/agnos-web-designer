@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Handle, Position } from "react-flow-renderer";
 import uuid from "react-native-uuid";
-import TextField from '@mui/material/TextField';
+// import TextField from '@mui/material/TextField';
 import { MenuAction } from "../../menu-definitions";
 import { grayscale, grayscaleImage } from "../../utils/image";
+import TextField from "../../components/textfield";
 
 const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) => {
     const action: MenuAction = data.action;
