@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useHistory  } from "react-router-dom";
 import ReactFlow, {
     removeElements,
     addEdge,
@@ -23,6 +24,7 @@ import { Button, ButtonGroup, FormControlLabel, Switch } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
 import dagre from "dagre";
+import uuid from "react-native-uuid";
 import { Menu as MenuDefinition, MenuAction } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
@@ -97,6 +99,7 @@ export type CanvasPropType = {
   
 const Canvas = (props: CanvasPropType) => {
     const { elements: initialElements, menus, designId } = props;
+    const history = useHistory();
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
@@ -125,33 +128,15 @@ const Canvas = (props: CanvasPropType) => {
     const { transform } = useZoomPanHelper();
     const onSave = useCallback(() => {
         if (reactFlowInstance) {
-            if (designId) {
-                const flow = reactFlowInstance.toObject();
-                const elementsToSave = flow.elements.map((el) => {
-                    if (isNode(el)) {
-                        return {
-                            id: el.id,
-                            type: el.type,
-                            position: el.position,
-                            data: {
-                                text: el.data["text"],
-                                content: {
-                                    props: el.data["content"]["props"],
-                                },
-                            },
-                        };
-                    }
-                    return el;
-                });
-                flowLocalStorage.save({
-                    id: designId,
-                    flow: {
-                        ...flow,
-                        elements: elementsToSave,
-                    },
-                });
-            } else {
-                // TODO:
+            const id = uuid.v4().toString();
+            const flow = reactFlowInstance.toObject();
+            flowLocalStorage.save({
+                id: designId || id,
+                flow,
+            });
+
+            if (!designId) {
+                history.push(`/designs/${id}`);
             }
         }
     }, [reactFlowInstance, designId]);
@@ -166,23 +151,7 @@ const Canvas = (props: CanvasPropType) => {
 
             if (flow) {
                 const [x = 0, y = 0] = flow.position;
-                const elementsToRestore = flow.elements.map((el) => {
-                    if (isNode(el)) {
-                        let action: MenuAction = {
-                            id: "",
-                            ...el.data["content"]["props"]["action"],
-                        };
-                        const useGrayscaleIcons = el.data["content"]["props"]["useGrayscaleIcons"];
-                    
-                        return createComponentFromMenuAction(action, {
-                            id: el.id,
-                            position: el.position,
-                            useGrayscaleIcons
-                        });
-                    }
-                    return el;
-                });
-                setElements(elementsToRestore || []);
+                setElements(flow.elements || []);
                 transform({ x, y, zoom: flow.zoom || 0 });
             }
         };
