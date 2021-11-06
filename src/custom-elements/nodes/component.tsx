@@ -1,12 +1,29 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Handle, Position } from "react-flow-renderer";
 import uuid from "react-native-uuid";
 import { MenuAction } from "../../menu-definitions";
 import { grayscale, grayscaleImage } from "../../utils/image";
+import SmallButton from "../../components/small-edit-button";
+import SmallTextField from "../../components/small-textfield";
 
 const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) => {
     const action: MenuAction = data.action;
     const useGrayscaleIcons: boolean = data.useGrayscaleIcons;
+    const setNodeEdit = data.setNodeEdit;
+    const [text, setText] = useState(action?.text);
+    const [editting, setEditting] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (!selected) setEditting(selected);
+    }, [selected]);
+
+    const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setText(event.target.value);
+        setNodeEdit({
+            id,
+            text: event.target.value,
+        });
+    };
     
     function handleMouseEnter(e) {
         if (id) {
@@ -72,8 +89,16 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                {action && action.text && <div style={{ fontSize: "10px", textAlign: "center" }}>
-                    <div>{action.text}</div>
+                {action && action.text && !editting && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                    <div>
+                        {action.text}
+                        {selected && <SmallButton onClick={() => setEditting(true)} />}
+                    </div>
+                </div>}
+                {action && action.text && editting && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                    <div>
+                        <SmallTextField id="outlined-basic" variant="outlined" value={text} onChange={handleTextChange} size="small" />
+                    </div>
                 </div>}
         </div>
     );

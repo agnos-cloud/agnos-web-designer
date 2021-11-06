@@ -1,3 +1,4 @@
+import React from "react";
 import { XYPosition } from "react-flow-renderer";
 import uuid from "react-native-uuid";
 import { MenuAction } from "../menu-definitions";
@@ -6,6 +7,10 @@ export type CreateComponentOptions = {
     id?: string;
     position?: XYPosition;
     useGrayscaleIcons?: boolean;
+    setNodeEdit: React.Dispatch<React.SetStateAction<{
+        id: string;
+        text: string;
+    }>>
 };
 
 export const createComponentFromMenuAction = (action: MenuAction, options?: CreateComponentOptions) => ({
@@ -15,5 +20,6 @@ export const createComponentFromMenuAction = (action: MenuAction, options?: Crea
     data: {
         action,
         useGrayscaleIcons: options?.useGrayscaleIcons,
+        setNodeEdit: options?.setNodeEdit,
     },
 })

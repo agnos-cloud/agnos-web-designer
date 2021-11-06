@@ -103,6 +103,7 @@ const Canvas = (props: CanvasPropType) => {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
+    const [nodeEdit, setNodeEdit] = useState<{ id: string, text: string } | null>(null);
     const [useGrayscaleIcons, setUseGrayscaleIcons] = useState(false);
     const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
@@ -125,14 +126,51 @@ const Canvas = (props: CanvasPropType) => {
         application.style.width = "100%";
     }, []);
 
+    useEffect(() => {
+        if (nodeEdit) {
+            setElements((els) =>
+                els.map((el) => {
+                    if (el.id === nodeEdit.id) {
+                        el.data = {
+                            ...el.data,
+                            action: {
+                                ...el.data.action,
+                                text: nodeEdit.text,
+                            },
+                        };
+                    }
+            
+                    return el;
+                })
+            );
+        }
+    }, [nodeEdit, setElements]);
+
     const { transform } = useZoomPanHelper();
     const onSave = useCallback(() => {
         if (reactFlowInstance) {
             const id = uuid.v4().toString();
             const flow = reactFlowInstance.toObject();
+            const elementsToSave = flow.elements.map((el) => {
+                if (isNode(el)) {
+                    return {
+                        id: el.id,
+                        type: el.type,
+                        position: el.position,
+                        data: {
+                            action: el.data["action"],
+                            useGrayscaleIcons: el.data["useGrayscaleIcons"],
+                        },
+                    };
+                }
+                return el;
+            });
             flowLocalStorage.save({
-                id: designId || id,
-                flow,
+                id: designId,
+                flow: {
+                    ...flow,
+                    elements: elementsToSave,
+                },
             });
 
             if (!designId) {
@@ -151,7 +189,24 @@ const Canvas = (props: CanvasPropType) => {
 
             if (flow) {
                 const [x = 0, y = 0] = flow.position;
-                setElements(flow.elements || []);
+                const elementsToRestore = flow.elements.map((el) => {
+                    if (isNode(el)) {
+                        let action: MenuAction = {
+                            id: "",
+                            ...el.data["action"],
+                        };
+                        const useGrayscaleIcons = el.data["useGrayscaleIcons"];
+
+                        return createComponentFromMenuAction(action, {
+                            id: el.id,
+                            position: el.position,
+                            useGrayscaleIcons,
+                            setNodeEdit,
+                        });
+                    }
+                    return el;
+                });
+                setElements(elementsToRestore || []);
                 transform({ x, y, zoom: flow.zoom || 0 });
             }
         };
@@ -207,7 +262,7 @@ const Canvas = (props: CanvasPropType) => {
             y: event.clientY - reactFlowBounds.top,
         });
     
-        setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useGrayscaleIcons })));
+        setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useGrayscaleIcons, setNodeEdit })));
     };
   
     const resetTransform = () => reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
@@ -333,7 +388,7 @@ const Canvas = (props: CanvasPropType) => {
                                 text: action.text,
                                 onClick: () => setElements((els) => [
                                     ...els,
-                                    createComponentFromMenuAction(action, { useGrayscaleIcons }),
+                                    createComponentFromMenuAction(action, { useGrayscaleIcons, setNodeEdit }),
                                 ]),
                             })
                         )}
