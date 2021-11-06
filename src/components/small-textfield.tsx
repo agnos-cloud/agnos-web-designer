@@ -6,7 +6,7 @@ const styles = {
     textField: {
         height: 8,
         fontSize: 10,
-        padding: 5,
+        // padding: 5,
     }
 }
 
