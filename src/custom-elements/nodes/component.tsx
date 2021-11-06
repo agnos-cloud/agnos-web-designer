@@ -1,12 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Handle, Position } from "react-flow-renderer";
 import uuid from "react-native-uuid";
+import TextField from '@mui/material/TextField';
 import { MenuAction } from "../../menu-definitions";
 import { grayscale, grayscaleImage } from "../../utils/image";
 
 const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) => {
     const action: MenuAction = data.action;
     const useGrayscaleIcons: boolean = data.useGrayscaleIcons;
+    const setNodeEdit = data.setNodeEdit;
+    const [text, setText] = useState(action?.text);
+    const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setText(event.target.value);
+        setNodeEdit({
+            id,
+            text: event.target.value,
+        });
+    };
     
     function handleMouseEnter(e) {
         if (id) {
@@ -72,8 +82,13 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                {action && action.text && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                {action && action.text && !selected && <div style={{ fontSize: "10px", textAlign: "center" }}>
                     <div>{action.text}</div>
+                </div>}
+                {action && action.text && selected && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                    <div>
+                        <TextField id="outlined-basic" variant="outlined" value={text} onChange={handleTextChange} size="small" />
+                    </div>
                 </div>}
         </div>
     );

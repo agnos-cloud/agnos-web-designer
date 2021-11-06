@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { ReactFlowProvider } from "react-flow-renderer";
 import { withRouter, RouteComponentProps } from "react-router";
-import { useParams  } from "react-router-dom";
 import Canvas from "./canvas";
 import { Menu as MenuDefinition } from "./menu-definitions";
 import awsMenuDefs from "./menu-definitions/aws";
@@ -13,9 +12,6 @@ import runtimesMenuDefs from "./menu-definitions/runtimes";
 export interface LoaderProps extends RouteComponentProps {}
 
 const Loader = (props: LoaderProps) => {
-    const params = useParams();
-    console.log(params)
-    console.log(props)
     const menus: MenuDefinition[] = [
         ...generalMenuDefs,
         ...runtimesMenuDefs,
