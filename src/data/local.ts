@@ -24,7 +24,6 @@ export type Flow = {
     id?: string;
     flow: FlowExportObject<any>;
 }
-
 export class FlowLocalStorage extends LocalStorage<Flow> {
     constructor() {
         super("flows");
@@ -34,5 +33,18 @@ export class FlowLocalStorage extends LocalStorage<Flow> {
 export class MenuLocalStorage extends LocalStorage<any> {
     constructor() {
         super("menus");
+    }
+}
+
+export type Settings = {
+    id?: string;
+    settings: {
+        useGrayscaleIcons: boolean;
+        autoSave: boolean;
+    };
+}
+export class SettingsLocalStorage extends LocalStorage<Settings> {
+    constructor() {
+        super("settings");
     }
 }

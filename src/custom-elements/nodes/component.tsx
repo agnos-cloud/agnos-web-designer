@@ -89,13 +89,13 @@ const ComponentNode = ({ id, data, selected, sourcePosition, targetPosition }) =
                             height: "2px",
                             borderRadius: "5px"  }}
                 />
-                {action && action.text && !editting && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                {action && (action.text !== undefined) && !editting && <div style={{ fontSize: "10px", textAlign: "center" }}>
                     <div>
                         {action.text}
                         {selected && <SmallButton onClick={() => setEditting(true)} />}
                     </div>
                 </div>}
-                {action && action.text && editting && <div style={{ fontSize: "10px", textAlign: "center" }}>
+                {action && (action.text !== undefined) && editting && <div style={{ fontSize: "10px", textAlign: "center" }}>
                     <div>
                         <SmallTextField id="outlined-basic" variant="outlined" value={text} onChange={handleTextChange} size="small" />
                     </div>
