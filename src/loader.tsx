@@ -22,7 +22,12 @@ const Loader = (props: LoaderProps) => {
 
     return (
         <ReactFlowProvider>
-            <Canvas elements={[]} menus={menus} designId={props.match.params["id"]} />
+            <Canvas
+                elements={[]}
+                menus={menus}
+                designId={props.match.params["id"]}
+                userId="frank123"
+            />
         </ReactFlowProvider>
     );
 }

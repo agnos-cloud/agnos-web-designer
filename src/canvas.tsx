@@ -32,13 +32,13 @@ import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-a
 import Menu from "./components/menu";
 import MenuActionIcon from "./components/menu-action-icon";
 import { createComponentFromMenuAction } from "./utils/component";
-import { FlowLocalStorage } from "./data/local";
+import { FlowLocalStorage, SettingsLocalStorage } from "./data/local";
 
 const flowLocalStorage = new FlowLocalStorage();
+const settingsLocalStorage = new SettingsLocalStorage();
 
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
-
 
 const getLayoutedElements = (elements: Elements, direction = "LR") => {
     let nodeWidth = 100;
@@ -95,36 +95,93 @@ export type CanvasPropType = {
     elements: Elements;
     menus?: MenuDefinition[];
     designId?: string;
+    userId?: string;
 }
   
 const Canvas = (props: CanvasPropType) => {
-    const { elements: initialElements, menus, designId } = props;
+    const { elements: initialElements, menus, designId, userId } = props;
     const history = useHistory();
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
     const [nodeEdit, setNodeEdit] = useState<{ id: string, text: string } | null>(null);
+    const [autoSave, setAutoSave] = useState(false);
     const [useGrayscaleIcons, setUseGrayscaleIcons] = useState(false);
     const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
+
     const onLayout = useCallback((direction) => {
         const layoutedElements = getLayoutedElements(elements, direction);
         setElements(layoutedElements);
     }, [elements]);
 
+    const recreateNodeElements = (els: Elements) => {
+        const elementsToRecreate = els.map((el) => {
+            if (isNode(el)) {
+                let action: MenuAction = {
+                    id: "",
+                    ...el.data["action"],
+                };
+                // const useGrayscaleIcons = el.data["useGrayscaleIcons"];
+
+                return createComponentFromMenuAction(action, {
+                    id: el.id,
+                    position: el.position,
+                    useGrayscaleIcons,
+                    setNodeEdit,
+                });
+            }
+            return el;
+        });
+        setElements(elementsToRecreate || []);
+    };
+
     useEffect(() => {
         const body = document.getElementsByTagName('body')[0];
         body.style.height = "98vh";
         body.style.width = "98vw";
-
+    
         const main = document.getElementsByTagName('main')[0];
         main.style.height = "100%";
         main.style.width = "100%";
-
+    
         const application = document.getElementById('single-spa-application:@agnos/agnos-web-designer');
         application.style.height = "100%";
         application.style.width = "100%";
     }, []);
+
+    useEffect(() => {
+        const restoreSettings = async () => {
+            if (!userId) return;
+            
+            const settingsContainer = await settingsLocalStorage.get(userId);
+            if (!settingsContainer) return;
+    
+            const { settings } = settingsContainer;
+    
+            if (settings) {
+                setAutoSave(settings.autoSave);
+                setUseGrayscaleIcons(settings.useGrayscaleIcons);
+            }
+        };
+
+        restoreSettings();
+    }, [userId]);
+    useEffect(() => {
+        const saveSettings = async () => {
+            if (!userId) return;
+            
+            settingsLocalStorage.save({
+                id: userId,
+                settings: {
+                    useGrayscaleIcons,
+                    autoSave,
+                },
+            });
+        };
+
+        saveSettings();
+    }, [autoSave, useGrayscaleIcons]);
 
     useEffect(() => {
         if (nodeEdit) {
@@ -146,8 +203,12 @@ const Canvas = (props: CanvasPropType) => {
         }
     }, [nodeEdit, setElements]);
 
+    useEffect(() => {
+        recreateNodeElements(elements);
+    }, [useGrayscaleIcons]);
+
     const { transform } = useZoomPanHelper();
-    const onSave = useCallback(() => {
+    const saveFlowElements = useCallback(() => {
         if (reactFlowInstance) {
             const id = uuid.v4().toString();
             const flow = reactFlowInstance.toObject();
@@ -159,7 +220,7 @@ const Canvas = (props: CanvasPropType) => {
                         position: el.position,
                         data: {
                             action: el.data["action"],
-                            useGrayscaleIcons: el.data["useGrayscaleIcons"],
+                            useGrayscaleIcons, // : el.data["useGrayscaleIcons"],
                         },
                     };
                 }
@@ -177,7 +238,7 @@ const Canvas = (props: CanvasPropType) => {
                 history.push(`/designs/${id}`);
             }
         }
-    }, [reactFlowInstance, designId]);
+    }, [reactFlowInstance, designId, useGrayscaleIcons]);
     useEffect(() => {
         const restoreFlow = async () => {
             if (!designId) return;
@@ -189,32 +250,16 @@ const Canvas = (props: CanvasPropType) => {
 
             if (flow) {
                 const [x = 0, y = 0] = flow.position;
-                const elementsToRestore = flow.elements.map((el) => {
-                    if (isNode(el)) {
-                        let action: MenuAction = {
-                            id: "",
-                            ...el.data["action"],
-                        };
-                        const useGrayscaleIcons = el.data["useGrayscaleIcons"];
-
-                        return createComponentFromMenuAction(action, {
-                            id: el.id,
-                            position: el.position,
-                            useGrayscaleIcons,
-                            setNodeEdit,
-                        });
-                    }
-                    return el;
-                });
-                setElements(elementsToRestore || []);
+                recreateNodeElements(flow.elements);
                 transform({ x, y, zoom: flow.zoom || 0 });
             }
         };
     
         restoreFlow();
-    }, [setElements, transform, designId]);
+    }, [transform, designId, useGrayscaleIcons]);
 
-    const handleUseGrayscaleIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseGrayscaleIcons(event.target.checked);;
+    const handleAutoSaveSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSave(event.target.checked);
+    const handleUseGrayscaleIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseGrayscaleIcons(event.target.checked);
     const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
         event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
         // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -275,7 +320,7 @@ const Canvas = (props: CanvasPropType) => {
             defaultZoom={1.5}
             minZoom={0.2}
             maxZoom={4}
-            snapToGrid={true} // TODO: expose as settings
+            snapToGrid={true}
             snapGrid={[15, 15]}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
@@ -320,7 +365,7 @@ const Canvas = (props: CanvasPropType) => {
                         id: "menu-0-save",
                         icon: (<Save />),
                         text: "Save",
-                        onClick: () => onSave(),
+                        onClick: () => saveFlowElements(),
                     }, {
                         id: "menu-0-download-as-image",
                         icon: (<CloudDownload />),
@@ -425,6 +470,20 @@ const Canvas = (props: CanvasPropType) => {
                     label="use grayscale icons"
                     style={{
                         color: useGrayscaleIcons ? "#1976d2" : "gray"
+                    }}
+                />
+                <FormControlLabel
+                    control={
+                        <Switch
+                            size="small"
+                            checked={autoSave}
+                            inputProps={{ 'aria-label': 'controlled' }}
+                            onChange={handleAutoSaveSwitchChange}
+                        />
+                    }
+                    label="auto save"
+                    style={{
+                        color: autoSave ? "#1976d2" : "gray"
                     }}
                 />
             </div>
