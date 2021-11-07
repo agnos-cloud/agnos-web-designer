@@ -317,7 +317,7 @@ const Canvas = (props: CanvasPropType) => {
             elements={elements}
             id="react-flow__canvas"
             className="react-flow__canvas"
-            defaultZoom={1.5}
+            defaultZoom={1}
             minZoom={0.2}
             maxZoom={4}
             snapToGrid={true}
