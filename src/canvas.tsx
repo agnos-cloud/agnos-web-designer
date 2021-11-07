@@ -110,7 +110,7 @@ const Canvas = (props: CanvasPropType) => {
     const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
 
-    const onLayout = useCallback((direction) => {
+    const layoutElements = useCallback((direction) => {
         const layoutedElements = getLayoutedElements(elements, direction);
         setElements(layoutedElements);
     }, [elements]);
@@ -135,6 +135,8 @@ const Canvas = (props: CanvasPropType) => {
         });
         setElements(elementsToRecreate || []);
     };
+
+    const resetTransform = () => reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
 
     useEffect(() => {
         const body = document.getElementsByTagName('body')[0];
@@ -208,7 +210,7 @@ const Canvas = (props: CanvasPropType) => {
     }, [useGrayscaleIcons]);
 
     const { transform } = useZoomPanHelper();
-    const saveFlowElements = useCallback(() => {
+    const saveElements = useCallback(() => {
         if (reactFlowInstance) {
             const id = uuid.v4().toString();
             const flow = reactFlowInstance.toObject();
@@ -240,7 +242,7 @@ const Canvas = (props: CanvasPropType) => {
         }
     }, [reactFlowInstance, designId, useGrayscaleIcons]);
     useEffect(() => {
-        const restoreFlow = async () => {
+        const restoreElements = async () => {
             if (!designId) return;
             
             const flowContainer = await flowLocalStorage.get(designId);
@@ -255,12 +257,19 @@ const Canvas = (props: CanvasPropType) => {
             }
         };
     
-        restoreFlow();
+        restoreElements();
     }, [transform, designId, useGrayscaleIcons]);
+
+    useEffect(() => {
+        if (autoSave) {
+            saveElements();
+        }
+    }, [elements]);
 
     const handleAutoSaveSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSave(event.target.checked);
     const handleUseGrayscaleIconsSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => setUseGrayscaleIcons(event.target.checked);
-    const handleMenuDrag = (event, action: MenuAction) => { // DragEvent
+
+    const handleMenuDrag = (event/*: DragEvent*/, action: MenuAction) => {
         event.dataTransfer.setData("application/reactflow:action", JSON.stringify(action));
         // const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
         // const position = rfInstance.project({
@@ -272,8 +281,7 @@ const Canvas = (props: CanvasPropType) => {
         event.dataTransfer.effectAllowed = "move";
     };
 
-    const onElementsRemove = (elementsToRemove: Elements) => setElements((els) => removeElements(elementsToRemove, els));
-    const onConnect = (params: Edge | Connection) => {
+    const handleOnConnect = (params: Edge | Connection) => {
         const edge: Edge = {
             ...params,
             id: `reactflow__edge-${params.source}${params.sourceHandle}-${params.target}${params.targetHandle}`,
@@ -286,15 +294,11 @@ const Canvas = (props: CanvasPropType) => {
         // };
         setElements((els) => addEdge(edge, els));
     }
-    const onLoad = (reactFlowInstance: OnLoadParams) => setReactFlowInstance(reactFlowInstance);
-    // gets called after end of edge gets dragged to another source or target
-    const onEdgeUpdate = (oldEdge: Edge<any>, newConnection: Connection) =>
-        setElements((els) => updateEdge(oldEdge, newConnection, els));
-    const onDragOver = (event) => {
+    const handleOnDragOver = (event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     };
-    const onDrop = (event) => {
+    const handleOnDrop = (event) => {
         event.preventDefault();
     
         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -309,8 +313,14 @@ const Canvas = (props: CanvasPropType) => {
     
         setElements((es) => es.concat(createComponentFromMenuAction(action, { position, useGrayscaleIcons, setNodeEdit })));
     };
-  
-    const resetTransform = () => reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
+    // gets called after end of edge gets dragged to another source or target
+    const handleOnEdgeUpdate = (oldEdge: Edge<any>, newConnection: Connection) =>
+        setElements((els) => updateEdge(oldEdge, newConnection, els));
+    const handleOnElementsRemove = (elementsToRemove: Elements) => setElements((els) => removeElements(elementsToRemove, els));
+    const handleOnLoad = (reactFlowInstance: OnLoadParams) => setReactFlowInstance(reactFlowInstance);
+    const handleOnNodeDragStop = (event: React.MouseEvent<Element, MouseEvent>, node: Node<any>) => {
+        if (autoSave) saveElements();
+    };
   
     return (
         <ReactFlow
@@ -328,12 +338,13 @@ const Canvas = (props: CanvasPropType) => {
             ref={reactFlowWrapper}
             connectionLineComponent={SmoothStepArrowHead}
             connectionLineType={ConnectionLineType.SmoothStep}
-            onLoad={onLoad}
-            onElementsRemove={onElementsRemove}
-            onConnect={onConnect}
-            onEdgeUpdate={onEdgeUpdate}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
+            onConnect={handleOnConnect}
+            onDragOver={handleOnDragOver}
+            onDrop={handleOnDrop}
+            onEdgeUpdate={handleOnEdgeUpdate}
+            onElementsRemove={handleOnElementsRemove}
+            onLoad={handleOnLoad}
+            onNodeDragStop={handleOnNodeDragStop}
         >
             <MiniMap
                 nodeStrokeColor={(n: Node) => {
@@ -365,7 +376,7 @@ const Canvas = (props: CanvasPropType) => {
                         id: "menu-0-save",
                         icon: (<Save />),
                         text: "Save",
-                        onClick: () => saveFlowElements(),
+                        onClick: () => saveElements(),
                     }, {
                         id: "menu-0-download-as-image",
                         icon: (<CloudDownload />),
@@ -448,7 +459,7 @@ const Canvas = (props: CanvasPropType) => {
                         <Restore  fontSize="small" />
                     </Button>
                     <Button variant="outlined" size="small" onClick={() => {
-                        onLayout(graphDirection);
+                        layoutElements(graphDirection);
                         setGraphDirection(graphDirection === "LR" ? "TB" : "LR");
                     }}>
                         {graphDirection === "LR" && <ArrowForward fontSize="small" />}
@@ -481,7 +492,7 @@ const Canvas = (props: CanvasPropType) => {
                             onChange={handleAutoSaveSwitchChange}
                         />
                     }
-                    label="auto save"
+                    label="auto-save"
                     style={{
                         color: autoSave ? "#1976d2" : "gray"
                     }}
