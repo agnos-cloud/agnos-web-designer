@@ -512,6 +512,7 @@ const Canvas = (props: CanvasPropType) => {
                 open={openMenuDialog}
                 onClose={() => setOpenMenuDialog(false)}
                 menus={installedMenus}
+                setInstalledMenus={setInstalledMenus}
             />
 
             <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
