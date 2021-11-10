@@ -32,10 +32,11 @@ import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-a
 import Menu from "./components/menu";
 import MenuActionIcon from "./components/menu-action-icon";
 import { createComponentFromMenuAction } from "./utils/component";
-import { FlowLocalStorage, SettingsLocalStorage } from "./data/local";
+import { FlowLocalStorage, MenuLocalStorage, SettingsLocalStorage } from "./data/local";
 import { mergeMenus } from "./utils/menu";
 
 const flowLocalStorage = new FlowLocalStorage();
+const menuLocalStorage = new MenuLocalStorage();
 const settingsLocalStorage = new SettingsLocalStorage();
 
 const dagreGraph = new dagre.graphlib.Graph();
@@ -169,8 +170,21 @@ const Canvas = (props: CanvasPropType) => {
                 setUseGrayscaleIcons(settings.useGrayscaleIcons);
             }
         };
+        const restoreInstalledMenus = async () => {
+            if (!userId) return;
+            
+            const menusContainer = await menuLocalStorage.get(userId);
+            if (!menusContainer) return;
+    
+            const { menus } = menusContainer;
+    
+            if (menus) {
+                setInstalledMenus(menus);
+            }
+        };
 
         restoreSettings();
+        restoreInstalledMenus();
     }, [userId]);
     useEffect(() => {
         const saveSettings = async () => {
@@ -189,8 +203,20 @@ const Canvas = (props: CanvasPropType) => {
     }, [autoSave, useGrayscaleIcons]);
 
     useEffect(() => {
-        setMenus(mergeMenus(initialMenus, installedMenus));
+        const saveInstalledMenus = async () => {
+            if (!userId) return;
+            
+            menuLocalStorage.save({
+                id: userId,
+                menus: installedMenus,
+            });
+        };
+
+        saveInstalledMenus();
     }, [installedMenus]);
+    useEffect(() => {
+        setMenus(mergeMenus(initialMenus, installedMenus));
+    }, [initialMenus, installedMenus]);
 
     useEffect(() => {
         if (nodeEdit) {
