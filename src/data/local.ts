@@ -2,6 +2,7 @@ import localforage from "./localforageconfig";
 import uuid from "react-native-uuid";
 import { Repository } from ".";
 import { FlowExportObject } from "react-flow-renderer";
+import { Menu as MenuDefinition } from "../menu-definitions";
 
 export class LocalStorage<T extends { id?: string }> implements Repository<T> {
     private _store: LocalForage;
@@ -30,7 +31,11 @@ export class FlowLocalStorage extends LocalStorage<Flow> {
     }
 }
 
-export class MenuLocalStorage extends LocalStorage<any> {
+export type Menus = {
+    id?: string;
+    menus: MenuDefinition[];
+}
+export class MenuLocalStorage extends LocalStorage<Menus> {
     constructor() {
         super("menus");
     }
