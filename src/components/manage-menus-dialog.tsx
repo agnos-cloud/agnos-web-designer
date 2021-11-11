@@ -64,7 +64,7 @@ export default function ManageMenusDialog(props: ManageMenusDialogProps) {
             setMenuDefinitionErrorMessage(e.message);
         }
       };
-    const handleSaveClick = () => {
+    const handleSaveMenu = () => {
         if (menuDefinitionError) return;
 
         const menuDefJson = JSON.parse(menuDefinitionText);
@@ -77,6 +77,20 @@ export default function ManageMenusDialog(props: ManageMenusDialogProps) {
                 id: uuid.v4().toString(),
             })),
         }));
+    }
+    const handleDeleteMenu = (event) => {
+        const id = event.currentTarget.id;
+        setInstalledMenus((menus) =>
+            menus
+                .map((menu) => {
+                    const index = menu.actions.findIndex((a) => a.id === id);
+                    if (index !== -1) {
+                        menu.actions.splice(index, 1);
+                    }
+                    return menu;
+                })
+                .filter((menu) => !!menu.actions?.length)
+        );
     }
 
     return (
@@ -100,7 +114,7 @@ export default function ManageMenusDialog(props: ManageMenusDialogProps) {
             <Button
                 style={{ margin: 10 }}
                 disabled={menuDefinitionError}
-                onClick={handleSaveClick}
+                onClick={handleSaveMenu}
             >Save</Button>
             <Divider />
             {menus.length > 0 && <List
@@ -130,7 +144,12 @@ export default function ManageMenusDialog(props: ManageMenusDialogProps) {
                                         key={action.id}
                                         sx={{ pl: 4 }}
                                         secondaryAction={
-                                            <IconButton edge="end" aria-label="delete">
+                                            <IconButton
+                                                id={action.id}
+                                                edge="end"
+                                                aria-label="delete"
+                                                onClick={handleDeleteMenu}
+                                            >
                                                 <Delete />
                                             </IconButton>
                                         }
