@@ -1,0 +1,68 @@
+
+Coding:
+    Practice solving questions with time limits
+    Propose good test cases
+System Design:
+    basic design principles
+    designing existing facebook products and features
+    think and discuss trade-offs
+    Ask clarifying questions and check your assumptions
+    Communicate
+Behavioral:
+    Conflict resolution
+    Working with others
+    Your roles and responsibilities
+    Answer questions from your CV
+
+How to Prepare
+    Know the process, the material, how to communicate
+
+To know:
+    data structures
+    algorithms
+    time and space complexities
+    your language of choice
+    communicate your thoughts
+
+1. The Logarithm
+2. Graph traversal
+3. Binary search
+4. Sliding window technique
+5. Recursion
+6. Inverting a binary tree; and reversing a linked list
+7. Suffix trees
+8. Heaps
+9. Dynamic programming
+10. Sorting algorithms, esp quick sort (helpful in quick select) and merge sort
+
+Trie data structure
+kth largest number
+
+=======
+, {
+            id: "test",
+            text: "Text",
+            image: {
+                // src: "https://image.shutterstock.com/z/stock-vector-flat-data-storage-icon-for-web-221924383.jpg",
+                src: "https://cdns.iconmonstr.com/wp-content/assets/preview/2012/240/iconmonstr-database-1.png"
+            },
+        }
+
+{
+    "id": "@frank/menu-1",
+    "text": "New menu",
+    "actions": [{
+        "id": "menu-action-1",
+        "text": "Menu action 1",
+        "image": {
+            "src": "https://cdns.iconmonstr.com/wp-content/assets/preview/2012/240/iconmonstr-database-1.png"
+        }
+    }, {
+        "id": "menu-action-2",
+        "text": "Menu action 2",
+        "paths": [{
+            "d": "M 92.5 92.894531 C 89.511719 72.796875 81.71875 52.988281 63.332031 46.636719 C 70.476562 42.183594 75.21875 34.265625 75.21875 25.21875 C 75.21875 11.304688 63.9375 0 50 0 C 36.0625 0 24.78125 11.28125 24.78125 25.21875 C 24.78125 34.246094 29.542969 42.183594 36.667969 46.636719 C 18.28125 52.988281 10.46875 72.796875 7.5 92.894531 C 6.9375 96.636719 9.882812 100 13.664062 100 L 86.292969 100 C 90.117188 100 93.0625 96.636719 92.5 92.894531 Z M 34.289062 25.21875 C 34.289062 16.546875 41.351562 9.484375 50.019531 9.484375 C 52.089844 9.484375 53.78125 11.179688 53.78125 13.246094 C 53.78125 15.316406 52.089844 17.007812 50.019531 17.007812 C 45.488281 17.007812 41.808594 20.683594 41.808594 25.21875 C 41.808594 27.289062 40.117188 28.980469 38.046875 28.980469 C 35.960938 28.980469 34.289062 27.308594 34.289062 25.21875 Z M 34.289062 25.21875",
+            "fill": "rgb(71.372549%,78.823529%,61.176471%)"
+        }]
+    }]
+}
