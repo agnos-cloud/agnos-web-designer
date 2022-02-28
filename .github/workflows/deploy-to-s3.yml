@@ -1,0 +1,35 @@
+# Github Action - npm run build && s3 sync ./dist
+name: deploy-to-S3
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm install
+      - run: npm run build:webpack
+      # The following is pinned to a known-good commit for safety purposes
+      # https://github.com/jakejarvis/s3-sync-action
+      - uses: jakejarvis/s3-sync-action@c33d061a8f4bddd78d8b5f9f4e5d2fd40a556980
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: 'agnos-heroku-code-deploy'
+          AWS_REGION: 'us-east-1'
+          SOURCE_DIR: 'dist'
+          DEST_DIR: 'agnos-web-designer'
