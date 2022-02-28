@@ -264,21 +264,21 @@ const Canvas = (props: CanvasPropType) => {
                 return el;
             });
             flowLocalStorage.save({
-                id: designId,
+                id: (!designId || designId === "+") ? id : designId,
                 flow: {
                     ...flow,
                     elements: elementsToSave,
                 },
             });
 
-            if (!designId) {
+            if (!designId || designId === "+") {
                 history.push(`/designs/${id}`);
             }
         }
     }, [reactFlowInstance, designId, useGrayscaleIcons]);
     useEffect(() => {
         const restoreElements = async () => {
-            if (!designId) return;
+            if (!designId || designId === "+") return;
             
             const flowContainer = await flowLocalStorage.get(designId);
             if (!flowContainer) return;

@@ -6,7 +6,7 @@ export default function Root(props) {
   return (
     <Router>
       <React.StrictMode>
-        <Route path="/designs/:id?">
+        <Route path="/designs/:id">
           <Loader />
         </Route>
       </React.StrictMode>
