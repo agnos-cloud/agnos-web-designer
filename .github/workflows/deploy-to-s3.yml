@@ -32,4 +32,4 @@ jobs:
           AWS_S3_BUCKET: 'agnos-heroku-code-deploy'
           AWS_REGION: 'us-east-1'
           SOURCE_DIR: 'dist'
-          DEST_DIR: 'agnos-web-designer'
+          DEST_DIR: 'agnos-web-designer' 
