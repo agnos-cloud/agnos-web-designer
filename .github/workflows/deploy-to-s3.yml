@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-18.04
+    name: Deploy MicroFramework Artifact to AWS
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
@@ -20,7 +21,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       - run: npm install
-      - run: npm run build:webpack
+      - run: npm run build
       # The following is pinned to a known-good commit for safety purposes
       # https://github.com/jakejarvis/s3-sync-action
       - uses: jakejarvis/s3-sync-action@c33d061a8f4bddd78d8b5f9f4e5d2fd40a556980
@@ -33,3 +34,30 @@ jobs:
           AWS_REGION: 'us-east-1'
           SOURCE_DIR: 'dist'
           DEST_DIR: 'agnos-web-designer'
+
+  update-importmap:
+    runs-on: ubuntu-18.04
+    name: Update importmap.json
+    steps:
+      - uses: actions/checkout@v2
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'us-east-1'
+      - run: aws s3 cp s3://agnos-heroku-code-deploy/importmap.json importmap.json
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '13.2.0' # we need this version or higher to run update-importmap.mjs
+      # - run: sudo chmod 777 importmap.json
+      - run: node update-importmap.mjs
+      - uses: docker://rewindio/github-action-s3-upload
+        with:
+          args: --acl public-read
+        env:
+          SOURCE_FILE: importmap.json
+          AWS_REGION: us-east-1
+          AWS_S3_BUCKET: agnos-heroku-code-deploy
+          # AWS_S3_FOLDER:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
