@@ -53,3 +53,13 @@ export class SettingsLocalStorage extends LocalStorage<Settings> {
         super("settings");
     }
 }
+
+export type User = {
+    id?: string;
+    user: any;
+}
+export class UsersLocalStorage extends LocalStorage<User> {
+    constructor() {
+        super("users");
+    }
+}
