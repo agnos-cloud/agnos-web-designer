@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ReactFlowProvider } from "react-flow-renderer";
 import { withRouter, RouteComponentProps } from "react-router";
+import { Link } from "react-router-dom";
 import { UsersLocalStorage } from "./data/local";
 import Canvas from "./canvas";
 import { Menu as MenuDefinition } from "./menu-definitions";
@@ -45,7 +46,7 @@ const Loader = (props: LoaderProps) => {
                 userId="frank123"
             />
         </ReactFlowProvider>
-    ) : <>You need to log in</>;
+    ) : <Link to={`/?return_url=${encodeURI(props.location.pathname)}`}>You need to login</Link>;
 }
 
 export default withRouter(Loader);
