@@ -3,7 +3,7 @@ import { SettingsLocalStorage } from "../data/local";
 
 const settingsLocalStorage = new SettingsLocalStorage();
 
-export default function useSettings(userId: string) {
+export function useSettings(userId: string) {
   const [autoSave, setAutoSave] = useState(false);
   const [useGrayscaleIcons, setUseGrayscaleIcons] = useState(false);
 
@@ -41,5 +41,10 @@ export default function useSettings(userId: string) {
     saveSettings();
   }, [autoSave, useGrayscaleIcons]);
 
-  return [autoSave, setAutoSave, useGrayscaleIcons, setUseGrayscaleIcons] as const;
+  return [
+    autoSave,
+    setAutoSave,
+    useGrayscaleIcons,
+    setUseGrayscaleIcons,
+  ] as const;
 }
