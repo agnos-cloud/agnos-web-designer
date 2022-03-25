@@ -397,10 +397,10 @@ const Canvas = (props: CanvasPropType) => {
                 }}
                 nodeBorderRadius={2}
             />
-            <Controls />
+            <Controls style={{ position: 'absolute', left: 80 }} />
             <Background variant={BackgroundVariant.Dots} color="#aaa" gap={16} />
 
-            <div style={{ position: 'absolute', left: 0, top: 20, zIndex: 4 }}>
+            <div style={{ position: 'absolute', left: 60, top: 80, zIndex: 4 }}>
                 <Menu
                     id="menu-0"
                     anchorElement={anchorElement}
@@ -477,7 +477,7 @@ const Canvas = (props: CanvasPropType) => {
                 />
             </div>
     
-            <div style={{ position: 'absolute', left: 70, top: 20, zIndex: 4 }}>
+            <div style={{ position: 'absolute', left: 130, top: 80, zIndex: 4 }}>
                 <ButtonGroup variant="contained" aria-label="outlined primary button group">
                 {menus.map((menu) => (
                     <Menu
@@ -515,7 +515,7 @@ const Canvas = (props: CanvasPropType) => {
                 setInstalledMenus={setInstalledMenus}
             />
 
-            <div style={{ position: 'absolute', left: 50, bottom: 10, zIndex: 4 }}>
+            <div style={{ position: 'absolute', left: 120, bottom: 10, zIndex: 4 }}>
                 <ButtonGroup variant="contained" aria-label="outlined primary button group">
                     <Button variant="outlined" size="small" onClick={resetTransform}>
                         <Restore  fontSize="small" />
@@ -530,7 +530,7 @@ const Canvas = (props: CanvasPropType) => {
                 </ButtonGroup>
             </div>
 
-            <div style={{ position: 'absolute', left: 150, bottom: 10, zIndex: 4 }}>
+            <div style={{ position: 'absolute', left: 220, bottom: 10, zIndex: 4 }}>
                 <FormControlLabel
                     control={
                         <Switch
