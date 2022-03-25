@@ -32,13 +32,13 @@ import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-a
 import Menu from "./components/menu";
 import MenuActionIcon from "./components/menu-action-icon";
 import { createComponentFromMenuAction } from "./utils/component";
-import { FlowLocalStorage, MenuLocalStorage, SettingsLocalStorage } from "./data/local";
+import { FlowLocalStorage, MenuLocalStorage } from "./data/local";
 import { mergeMenus } from "./utils/menu";
 import ManageMenusDialog from "./components/manage-menus-dialog";
+import useSettings from "./hooks/settings";
 
 const flowLocalStorage = new FlowLocalStorage();
 const menuLocalStorage = new MenuLocalStorage();
-const settingsLocalStorage = new SettingsLocalStorage();
 
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -108,8 +108,7 @@ const Canvas = (props: CanvasPropType) => {
     const [reactFlowInstance, setReactFlowInstance] = useState<OnLoadParams | null>(null);
     const [elements, setElements] = useState<Elements>(getLayoutedElements(initialElements));
     const [nodeEdit, setNodeEdit] = useState<{ id: string, text: string } | null>(null);
-    const [autoSave, setAutoSave] = useState(false);
-    const [useGrayscaleIcons, setUseGrayscaleIcons] = useState(false);
+    const [autoSave, setAutoSave, useGrayscaleIcons, setUseGrayscaleIcons] = useSettings(userId);
     const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
     const [openMenuDialog, setOpenMenuDialog] = React.useState(false);
     const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
@@ -159,19 +158,6 @@ const Canvas = (props: CanvasPropType) => {
     }, []);
 
     useEffect(() => {
-        const restoreSettings = async () => {
-            if (!userId) return;
-            
-            const settingsContainer = await settingsLocalStorage.get(userId);
-            if (!settingsContainer) return;
-    
-            const { settings } = settingsContainer;
-    
-            if (settings) {
-                setAutoSave(settings.autoSave);
-                setUseGrayscaleIcons(settings.useGrayscaleIcons);
-            }
-        };
         const restoreInstalledMenus = async () => {
             if (!userId) return;
             
@@ -185,24 +171,8 @@ const Canvas = (props: CanvasPropType) => {
             }
         };
 
-        restoreSettings();
         restoreInstalledMenus();
     }, [userId]);
-    useEffect(() => {
-        const saveSettings = async () => {
-            if (!userId) return;
-            
-            settingsLocalStorage.save({
-                id: userId,
-                settings: {
-                    useGrayscaleIcons,
-                    autoSave,
-                },
-            });
-        };
-
-        saveSettings();
-    }, [autoSave, useGrayscaleIcons]);
 
     useEffect(() => {
         const saveInstalledMenus = async () => {
