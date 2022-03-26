@@ -53,11 +53,12 @@ const Canvas = (props: CanvasPropType) => {
     designId,
     userId,
   } = props;
-  const { autoSave, setAutoSave, useGrayscaleIcons, setUseGrayscaleIcons } =
-    useSettings(userId);
   const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
   const [openMenuDialog, setOpenMenuDialog] = React.useState(false);
   const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
+  const [selectedNode, setSelectedNode] = useState<null | Node<any>>(null);
+  const { autoSave, setAutoSave, useGrayscaleIcons, setUseGrayscaleIcons } =
+    useSettings(userId);
   const { menus, installedMenus, setInstalledMenus } = useMenus(
     userId,
     initialMenus
@@ -73,6 +74,7 @@ const Canvas = (props: CanvasPropType) => {
     layoutElements,
   } = useFlow(designId, initialElements, autoSave, useGrayscaleIcons);
 
+  // set size
   useEffect(() => {
     const body = document.getElementsByTagName("body")[0];
     body.style.height = "98vh";
@@ -88,6 +90,54 @@ const Canvas = (props: CanvasPropType) => {
     application.style.height = "100%";
     application.style.width = "100%";
   }, []);
+
+  // listen to key events for ctrl+c and ctrl+v
+  useEffect(() => {
+    window.onkeydown = async (event: KeyboardEvent) => {
+      const c = event.keyCode;
+      const ctrlDown = event.ctrlKey || event.metaKey; // Mac support
+
+      if (ctrlDown && c == 67) {
+        // ctr + c
+        try {
+          if (selectedNode) {
+            const action = selectedNode.data["action"];
+            const position = selectedNode.position;
+            await navigator.clipboard.writeText(
+              JSON.stringify({ data: { action }, position })
+            );
+          }
+        } catch (error) {}
+      } else if (ctrlDown && c == 86) {
+        // ctr + v
+        try {
+          const pasteText = await navigator.clipboard.readText();
+          const pastObj = JSON.parse(pasteText);
+          if (pastObj.data && pastObj.data.action && pastObj.position) {
+            // create a new element but offset its position to the south-east of the original
+            let action: MenuAction = pastObj.data.action;
+
+            const position = {
+              x: pastObj.position.x + 50,
+              y: pastObj.position.y + 50,
+            };
+
+            setElements((es) =>
+              es.concat(
+                createComponentFromMenuAction(action, {
+                  position,
+                  useGrayscaleIcons,
+                  setNodeEdit,
+                })
+              )
+            );
+          }
+        } catch (error) {}
+      } else if (ctrlDown && c == 88) {
+        // ctr + x
+      }
+    };
+  }, [selectedNode, useGrayscaleIcons, setNodeEdit]);
 
   const handleResetTransform = () =>
     reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
@@ -174,6 +224,11 @@ const Canvas = (props: CanvasPropType) => {
     if (autoSave) saveElements();
   };
 
+  const handleOnSelectionChange = (selectedElements) => {
+    const node = selectedElements?.[0] as Node;
+    setSelectedNode(node);
+  };
+
   return (
     <ReactFlow
       elements={elements}
@@ -197,6 +252,7 @@ const Canvas = (props: CanvasPropType) => {
       onElementsRemove={handleOnElementsRemove}
       onLoad={handleOnLoad}
       onNodeDragStop={handleOnNodeDragStop}
+      onSelectionChange={handleOnSelectionChange}
     >
       <MiniMap
         nodeStrokeColor={(n: Node) => {
