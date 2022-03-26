@@ -43,5 +43,5 @@ export function useMenus(userId: string, initialMenus: MenuDefinition[]) {
     setMenus(mergeMenus(initialMenus, installedMenus));
   }, [initialMenus, installedMenus]);
 
-  return [menus, setMenus, installedMenus, setInstalledMenus] as const;
+  return { menus, setMenus, installedMenus, setInstalledMenus } as const;
 }

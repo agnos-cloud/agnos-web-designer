@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useHistory } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import ReactFlow, {
   removeElements,
   addEdge,
@@ -15,9 +14,6 @@ import ReactFlow, {
   ArrowHeadType,
   ConnectionLineType,
   updateEdge,
-  isNode,
-  Position,
-  useZoomPanHelper,
 } from "react-flow-renderer";
 import {
   ArrowDownward,
@@ -33,8 +29,6 @@ import {
 import { Button, ButtonGroup, FormControlLabel, Switch } from "@mui/material";
 import domtoimage from "dom-to-image";
 import { saveAs } from "file-saver";
-import dagre from "dagre";
-import uuid from "react-native-uuid";
 import { Menu as MenuDefinition, MenuAction } from "./menu-definitions";
 import { nodeTypes } from "./custom-elements/nodes";
 import { edgeTypes } from "./custom-elements/edges";
@@ -42,65 +36,8 @@ import SmoothStepArrowHead from "./custom-elements/connection-lines/smoothstep-a
 import Menu from "./components/menu";
 import MenuActionIcon from "./components/menu-action-icon";
 import { createComponentFromMenuAction } from "./utils/component";
-import { FlowLocalStorage } from "./data/local";
 import ManageMenusDialog from "./components/manage-menus-dialog";
-import { useMenus, useSettings } from "./hooks";
-
-const flowLocalStorage = new FlowLocalStorage();
-
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const getLayoutedElements = (elements: Elements, direction = "LR") => {
-  let nodeWidth = 100;
-  let nodeHeight = 100;
-  const isHorizontal = direction === "LR";
-  dagreGraph.setGraph({ rankdir: direction });
-
-  elements.forEach((el) => {
-    if (isNode(el)) {
-      if (el.type === "text") {
-        nodeWidth = 172;
-        nodeHeight = 36;
-      } else {
-        nodeWidth = 100;
-        nodeHeight = 100;
-      }
-
-      dagreGraph.setNode(el.id, { width: nodeWidth, height: nodeHeight });
-    } else {
-      dagreGraph.setEdge(el.source, el.target);
-    }
-  });
-
-  dagre.layout(dagreGraph);
-
-  return elements.map((el) => {
-    if (isNode(el)) {
-      if (el.type === "text") {
-        nodeWidth = 172;
-        nodeHeight = 36;
-      } else {
-        nodeWidth = 100;
-        nodeHeight = 100;
-      }
-
-      const nodeWithPosition = dagreGraph.node(el.id);
-      el.targetPosition = isHorizontal ? Position.Left : Position.Top;
-      el.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
-
-      // unfortunately we need this little hack to pass a slightly different position
-      // to notify react flow about the change. Moreover we are shifting the dagre node position
-      // (anchor=center center) to the top left so it matches the react flow node anchor point (top left).
-      el.position = {
-        x: nodeWithPosition.x - nodeWidth / 2 + Math.random() / 1000,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      };
-    }
-
-    return el;
-  });
-};
+import { useFlow, useMenus, useSettings } from "./hooks";
 
 export type CanvasPropType = {
   elements: Elements;
@@ -116,57 +53,25 @@ const Canvas = (props: CanvasPropType) => {
     designId,
     userId,
   } = props;
-  const history = useHistory();
-  const reactFlowWrapper = useRef(null);
-  const [reactFlowInstance, setReactFlowInstance] =
-    useState<OnLoadParams | null>(null);
-  const [elements, setElements] = useState<Elements>(
-    getLayoutedElements(initialElements)
-  );
-  const [nodeEdit, setNodeEdit] = useState<{ id: string; text: string } | null>(
-    null
-  );
-  const [autoSave, setAutoSave, useGrayscaleIcons, setUseGrayscaleIcons] =
+  const { autoSave, setAutoSave, useGrayscaleIcons, setUseGrayscaleIcons } =
     useSettings(userId);
   const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
   const [openMenuDialog, setOpenMenuDialog] = React.useState(false);
   const [graphDirection, setGraphDirection] = useState<"LR" | "TB">("TB");
-  const [menus, setMenus, installedMenus, setInstalledMenus] = useMenus(
+  const { menus, installedMenus, setInstalledMenus } = useMenus(
     userId,
     initialMenus
   );
-
-  const layoutElements = useCallback(
-    (direction) => {
-      const layoutedElements = getLayoutedElements(elements, direction);
-      setElements(layoutedElements);
-    },
-    [elements]
-  );
-
-  const recreateNodeElements = (els: Elements) => {
-    const elementsToRecreate = els.map((el) => {
-      if (isNode(el)) {
-        let action: MenuAction = {
-          id: "",
-          ...el.data["action"],
-        };
-        // const useGrayscaleIcons = el.data["useGrayscaleIcons"];
-
-        return createComponentFromMenuAction(action, {
-          id: el.id,
-          position: el.position,
-          useGrayscaleIcons,
-          setNodeEdit,
-        });
-      }
-      return el;
-    });
-    setElements(elementsToRecreate || []);
-  };
-
-  const resetTransform = () =>
-    reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
+  const {
+    elements,
+    setElements,
+    setNodeEdit,
+    reactFlowInstance,
+    setReactFlowInstance,
+    reactFlowWrapper,
+    saveElements,
+    layoutElements,
+  } = useFlow(designId, initialElements, autoSave, useGrayscaleIcons);
 
   useEffect(() => {
     const body = document.getElementsByTagName("body")[0];
@@ -184,86 +89,8 @@ const Canvas = (props: CanvasPropType) => {
     application.style.width = "100%";
   }, []);
 
-  useEffect(() => {
-    if (nodeEdit) {
-      setElements((els) =>
-        els.map((el) => {
-          if (el.id === nodeEdit.id) {
-            el.data = {
-              ...el.data,
-              action: {
-                ...el.data.action,
-                text: nodeEdit.text,
-              },
-            };
-          }
-
-          return el;
-        })
-      );
-    }
-  }, [nodeEdit, setElements]);
-
-  useEffect(() => {
-    recreateNodeElements(elements);
-  }, [useGrayscaleIcons]);
-
-  const { transform } = useZoomPanHelper();
-  const saveElements = useCallback(() => {
-    if (reactFlowInstance) {
-      const id = uuid.v4().toString();
-      const flow = reactFlowInstance.toObject();
-      const elementsToSave = flow.elements.map((el) => {
-        if (isNode(el)) {
-          return {
-            id: el.id,
-            type: el.type,
-            position: el.position,
-            data: {
-              action: el.data["action"],
-              useGrayscaleIcons, // : el.data["useGrayscaleIcons"],
-            },
-          };
-        }
-        return el;
-      });
-      flowLocalStorage.save({
-        id: !designId || designId === "+" ? id : designId,
-        flow: {
-          ...flow,
-          elements: elementsToSave,
-        },
-      });
-
-      if (!designId || designId === "+") {
-        history.push(`/designs/${id}`);
-      }
-    }
-  }, [reactFlowInstance, designId, useGrayscaleIcons]);
-  useEffect(() => {
-    const restoreElements = async () => {
-      if (!designId || designId === "+") return;
-
-      const flowContainer = await flowLocalStorage.get(designId);
-      if (!flowContainer) return;
-
-      const { flow } = flowContainer;
-
-      if (flow) {
-        const [x = 0, y = 0] = flow.position;
-        recreateNodeElements(flow.elements);
-        transform({ x, y, zoom: flow.zoom || 0 });
-      }
-    };
-
-    restoreElements();
-  }, [transform, designId, useGrayscaleIcons]);
-
-  useEffect(() => {
-    if (autoSave) {
-      saveElements();
-    }
-  }, [elements]);
+  const handleResetTransform = () =>
+    reactFlowInstance?.setTransform({ x: 0, y: 0, zoom: 1 });
 
   const handleAutoSaveSwitchChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -329,13 +156,17 @@ const Canvas = (props: CanvasPropType) => {
       )
     );
   };
+
   // gets called after end of edge gets dragged to another source or target
   const handleOnEdgeUpdate = (oldEdge: Edge<any>, newConnection: Connection) =>
     setElements((els) => updateEdge(oldEdge, newConnection, els));
+
   const handleOnElementsRemove = (elementsToRemove: Elements) =>
     setElements((els) => removeElements(elementsToRemove, els));
+
   const handleOnLoad = (reactFlowInstance: OnLoadParams) =>
     setReactFlowInstance(reactFlowInstance);
+
   const handleOnNodeDragStop = (
     event: React.MouseEvent<Element, MouseEvent>,
     node: Node<any>
@@ -498,7 +329,11 @@ const Canvas = (props: CanvasPropType) => {
           variant="contained"
           aria-label="outlined primary button group"
         >
-          <Button variant="outlined" size="small" onClick={resetTransform}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleResetTransform}
+          >
             <Restore fontSize="small" />
           </Button>
           <Button
