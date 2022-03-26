@@ -41,10 +41,10 @@ export function useSettings(userId: string) {
     saveSettings();
   }, [autoSave, useGrayscaleIcons]);
 
-  return [
+  return {
     autoSave,
     setAutoSave,
     useGrayscaleIcons,
     setUseGrayscaleIcons,
-  ] as const;
+  } as const;
 }
